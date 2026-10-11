@@ -12,6 +12,7 @@
  * letter is drawn as a capital, and characters with no glyph leave a blank cell. */
 #pragma once
 #include "mosaico_raylib_fast.h"
+#include "ui_dim.h"
 
 enum { UI_FONT_CELL = 6, UI_FONT_HEIGHT = 7 };  /* Pixels per cell and glyph row count at scale 1. */
 

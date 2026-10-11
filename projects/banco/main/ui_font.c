@@ -106,7 +106,7 @@ void ui_text_draw(const char *utf8, int x, int y, int scale, Color color)
             draw_glyph(glyph, x, y, scale, color);
         } else if (engine_has(code)) {
             single[0] = (char)code;
-            DrawText(single, x, y, ENGINE_FONT_UNIT * scale, color);
+            DrawText(single, x, y, ENGINE_FONT_UNIT * scale, ui_dim_color(color));
         }
         x += UI_FONT_CELL * scale;
     }

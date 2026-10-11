@@ -3,7 +3,6 @@
 #include <math.h>
 #include "bundle_gsp.h"
 #include "bsp/battery.h"
-#include "bsp/display.h"
 #include "esp_check.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -110,22 +109,9 @@ static void on_event(const mosaico_device_event_t *event)
         game_set_pointer(s_game, event->x, event->y, event->pressed);
 }
 
-/* The panel brightness follows the game: the chosen level, dimmed and then off after a while
- * without a touch. Only a change is sent to the panel. */
-static void apply_brightness(void)
-{
-    static int s_applied = -1;
-    const int wanted = game_display_brightness(s_game);
-    if (wanted == s_applied) return;
-    s_applied = wanted;
-    const esp_err_t result = bsp_display_brightness_set(wanted);
-    if (result != ESP_OK) ESP_LOGW(GAME_NAME, "brightness %d%% not applied: %s", wanted, esp_err_to_name(result));
-}
-
 static void on_update(void)
 {
     game_update(s_game);
-    apply_brightness();
     battery_sample_t battery;
     bool fresh;
     portENTER_CRITICAL(&s_battery_lock);

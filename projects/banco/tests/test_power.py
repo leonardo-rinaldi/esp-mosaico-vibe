@@ -5,6 +5,7 @@ in Host frames: 30 per second."""
 from __future__ import annotations
 
 import ctypes
+import io
 import sys
 import tempfile
 import unittest
@@ -163,6 +164,40 @@ class PowerSaving(unittest.TestCase):
         self.tap(CONV_TILE)
         self.step(30 * FPS + 30)
         self.assertEqual(self.brightness(), 0)
+
+    # What is drawn: colours are scaled by the brightness, and the screen goes black.
+    def brightest(self) -> int:
+        from PIL import Image
+        image = Image.open(io.BytesIO(self.rt.frame())).convert("RGB")
+        return max(max(pixel) for pixel in image.getdata())
+
+    def test_drawing_follows_the_brightness(self) -> None:
+        full = self.brightest()
+        self.assertGreaterEqual(full, 240)
+        for name, percent in (("medium", 60), ("low", 30)):
+            with self.subTest(level=name):
+                self.choose(brightness=name)
+                self.step(2)
+                self.assertAlmostEqual(self.brightest(), full * percent / 100, delta=full * 0.06)
+
+    def test_a_dim_screen_is_drawn_dark(self) -> None:
+        self.choose(sleep="30")
+        self.step(30 * FPS // 2 + 30)
+        self.assertLessEqual(self.brightest(), 40)
+
+    def test_an_off_screen_shows_pure_black(self) -> None:
+        self.choose(sleep="30")
+        self.step(30 * FPS + 30)
+        self.assertEqual(self.brightest(), 0)
+        self.step(60)
+        self.assertEqual(self.brightest(), 0)
+
+    def test_waking_draws_the_interface_again(self) -> None:
+        self.choose(sleep="30")
+        self.step(30 * FPS + 30)
+        self.tap((240, 300))
+        self.step(2)
+        self.assertGreaterEqual(self.brightest(), 240)
 
     # Remembering.
     def test_choices_are_part_of_the_saved_settings(self) -> None:

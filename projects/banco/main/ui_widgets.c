@@ -5,7 +5,23 @@
 #include <string.h>
 #include "ui_font.h"
 
-enum { BUTTON_GAP = 2 };        /* Space between neighbouring buttons. */
+enum { BUTTON_GAP = 2, FULL_BRIGHTNESS = 100 };
+
+static int s_brightness = FULL_BRIGHTNESS;
+
+void ui_dim_set(int percent)
+{
+    s_brightness = percent < 0 ? 0 : (percent > FULL_BRIGHTNESS ? FULL_BRIGHTNESS : percent);
+}
+
+Color ui_dim_color(Color color)
+{
+    if (s_brightness == FULL_BRIGHTNESS) return color;
+    color.r = (unsigned char)(color.r * s_brightness / FULL_BRIGHTNESS);
+    color.g = (unsigned char)(color.g * s_brightness / FULL_BRIGHTNESS);
+    color.b = (unsigned char)(color.b * s_brightness / FULL_BRIGHTNESS);
+    return color;
+}        /* Space between neighbouring buttons. */
 
 bool ui_rect_contains(ui_rect_t rect, int32_t x, int32_t y)
 {

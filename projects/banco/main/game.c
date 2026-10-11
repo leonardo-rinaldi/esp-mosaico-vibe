@@ -29,6 +29,7 @@ enum {
     BACK_BUTTON_WIDTH = 150,        /* The rest of the header only shows the title. */
     POWER_BUTTON_X = 330,           /* Battery screen: the button to the power-saving screen. */
     DIM_PERCENT = 10,               /* Brightness of a dimmed screen. */
+    DARK_FRAMES = 4,                /* More than the engine's three frame buffers. */
 };
 
 static const char *const s_screen_name[GAME_SCREEN_COUNT] = {
@@ -63,6 +64,7 @@ struct game_t {
     battery_screen_t battery;
     power_state_t power;
     uint32_t idle_ticks;            /* Ticks since the last touch; drives dimming and screen off. */
+    uint8_t dark_frames;            /* Black frames drawn since the screen turned off. */
     settings_t seen;                /* Last values reported by game_settings_poll. */
 };
 
@@ -390,7 +392,16 @@ static void draw_header(const struct game_t *game)
 bool game_render(game_handle_t game)
 {
     if (!game) return false;
-    if (game_display_brightness(game) == 0) return true;     /* Screen off: nothing to draw. */
+    /* Everything is drawn through the brightness, so 0 draws black. Once every frame buffer
+     * shows black the screen is left alone, which is what saves the battery. */
+    const int brightness = game_display_brightness(game);
+    if (brightness == 0) {
+        if (game->dark_frames >= DARK_FRAMES) return true;
+        ++game->dark_frames;
+    } else {
+        game->dark_frames = 0;
+    }
+    ui_dim_set(brightness);
     BeginDrawing();
     if (!MosaicoFastFrameAvailable()) {
         EndDrawing();

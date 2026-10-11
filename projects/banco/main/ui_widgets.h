@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "mosaico_raylib_fast.h"
+#include "ui_dim.h"
 
 #define UI_COLOR_BG ((Color){14, 18, 28, 255})
 #define UI_COLOR_PANEL ((Color){28, 36, 54, 255})

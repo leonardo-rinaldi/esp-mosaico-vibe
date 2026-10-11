@@ -25,8 +25,10 @@ to full. The gauge is read by a small task every 2 s, started 3 s after boot.
 Battery life: the RISPARMIO button on the battery screen sets the screen brightness (high 100 %,
 medium 60 %, low 30 %) and the time without a touch after which the screen dims to 10 % (at half the
 time) and then turns off (never, 30 s, 1 min, 2 min; default 1 min). A touch wakes it, and that
-touch does not press anything. The choices are remembered. The panel brightness is set with
-`bsp_display_brightness_set` in `main/main.c`; nothing is drawn while the screen is off.
+touch does not press anything. The choices are remembered. Dimming is done in software by
+scaling every colour drawn (`main/ui_dim.h`): changing the panel's brightness register while the display
+driver is sending frames hangs the screen. When the screen is off a few black frames are drawn and then
+nothing, so the panel shows black and the CPU stays idle.
 
 Sources: `main/screen_menu.c` (home), `screen_conv/ohm/color/cable.c` (functions),
 `screen_led/divider/smd/awg.c` and `form.c` (bench tools), `screen_power.c` (power saving),

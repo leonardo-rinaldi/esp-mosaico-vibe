@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 /* Power saving: how bright the screen is, and when it dims and then turns off after the last
  * touch. The display is the board's biggest consumer, and the interface is dark, so a lower
- * brightness and a short timeout are what make the battery last. Opened from the battery
+ * brightness and a short timeout are what make the battery last. The dimming is done by
+ * drawing darker colours (see ui_dim.h), not with the panel's brightness register. Opened from the battery
  * screen. The idle timing itself runs in game.c; this screen only holds the two choices. */
 #pragma once
 #include "ui_widgets.h"
