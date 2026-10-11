@@ -13,6 +13,7 @@
 #include "screen_cable.h"
 #include "screen_color.h"
 #include "screen_conv.h"
+#include "screen_lens.h"
 #include "screen_level.h"
 #include "screen_menu.h"
 #include "screen_ohm.h"
@@ -25,13 +26,13 @@ enum {
 };
 
 static const char *const s_screen_name[GAME_SCREEN_COUNT] = {
-    "menu", "conv", "ohm", "colori", "cavo", "livella", "batteria",
+    "menu", "conv", "ohm", "colori", "cavo", "livella", "lente", "batteria",
 };
 /* Header title of each function screen; the menu has no header. */
 static const text_id_t s_screen_title[GAME_SCREEN_COUNT] = {
     [GAME_SCREEN_CONVERTER] = TXT_TITLE_CONV, [GAME_SCREEN_OHM] = TXT_TITLE_OHM,
     [GAME_SCREEN_COLORS] = TXT_TITLE_COLOR, [GAME_SCREEN_CABLE] = TXT_TITLE_CABLE,
-    [GAME_SCREEN_LEVEL] = TXT_TITLE_LEVEL, [GAME_SCREEN_BATTERY] = TXT_TITLE_BATTERY,
+    [GAME_SCREEN_LEVEL] = TXT_TITLE_LEVEL, [GAME_SCREEN_LENS] = TXT_TITLE_LENS, [GAME_SCREEN_BATTERY] = TXT_TITLE_BATTERY,
 };
 
 struct game_t {
@@ -46,6 +47,7 @@ struct game_t {
     color_state_t color;
     cable_state_t cable;
     level_state_t level;
+    lens_state_t lens;
     battery_screen_t battery;
     settings_t seen;                /* Last values reported by game_settings_poll. */
 };
@@ -58,6 +60,7 @@ static void relocalize_screens(game_handle_t game)
     color_relocalize(&game->color);
     cable_relocalize(&game->cable);
     level_relocalize(&game->level);
+    lens_relocalize(&game->lens);
     battery_screen_relocalize(&game->battery);
 }
 
@@ -70,6 +73,7 @@ static void init_screens(game_handle_t game)
     color_init(&game->color);
     cable_init(&game->cable);
     level_init(&game->level);
+    lens_init(&game->lens);
     battery_screen_init(&game->battery);
     /* The gauge keeps reporting on its own, so a reset must not forget the last reading. */
     if (last_battery.valid) battery_screen_set(&game->battery, &last_battery);
@@ -243,6 +247,7 @@ static const ui_lines_t *active_view(const struct game_t *game)
     case GAME_SCREEN_COLORS: return &game->color.view;
     case GAME_SCREEN_CABLE: return &game->cable.view;
     case GAME_SCREEN_LEVEL: return &game->level.view;
+    case GAME_SCREEN_LENS: return &game->lens.view;
     case GAME_SCREEN_BATTERY: return &game->battery.view;
     default: return &game->menu.view;
     }
@@ -263,7 +268,10 @@ static void tap(game_handle_t game, int32_t x, int32_t y)
         }
         const int tile = menu_hit(x, y);
         /* The tiles are in the same order as the function screens after the menu. */
-        if (tile >= 0) game->screen = (game_screen_t)(GAME_SCREEN_CONVERTER + tile);
+        if (tile >= 0) {
+            game->screen = (game_screen_t)(GAME_SCREEN_CONVERTER + tile);
+            if (game->screen == GAME_SCREEN_LENS) lens_enter(&game->lens);
+        }
         return;
     }
     if (y < UI_TAB_HEIGHT) {
@@ -276,8 +284,22 @@ static void tap(game_handle_t game, int32_t x, int32_t y)
     case GAME_SCREEN_COLORS: color_tap(&game->color, x, y); break;
     case GAME_SCREEN_CABLE: cable_tap(&game->cable, x, y); break;
     case GAME_SCREEN_LEVEL: level_tap(&game->level, x, y); break;
+    case GAME_SCREEN_LENS: lens_tap(&game->lens, x, y); break;
     default: break;
     }
+}
+
+void game_lens_request(game_handle_t game, lens_request_t *out)
+{
+    if (!game || !out) return;
+    out->active = game->screen == GAME_SCREEN_LENS;
+    out->zoom = game->lens.zoom;
+    out->frozen = game->lens.frozen;
+}
+
+void game_set_lens_status(game_handle_t game, lens_status_t status)
+{
+    if (game) lens_set_status(&game->lens, status);
 }
 
 void game_set_pointer(game_handle_t game, int32_t x, int32_t y, bool pressed)
@@ -314,9 +336,18 @@ static void draw_header(const struct game_t *game)
                         HEADER_TEXT_SCALE, UI_COLOR_ACCENT);
 }
 
+static void lens_overlay(void *context)
+{
+    const struct game_t *game = context;
+    draw_header(game);
+    lens_draw_overlay(&game->lens, &game->pointer);
+}
+
 bool game_render(game_handle_t game)
 {
     if (!game) return false;
+    /* The lens paints the camera picture straight into the display frame. */
+    if (game->screen == GAME_SCREEN_LENS) return lens_present(&game->lens, lens_overlay, game);
     BeginDrawing();
     if (!MosaicoFastFrameAvailable()) {
         EndDrawing();

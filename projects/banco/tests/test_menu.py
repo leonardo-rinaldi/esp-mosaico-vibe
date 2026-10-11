@@ -21,7 +21,7 @@ import run_game  # noqa: E402
 
 CONTROL_RESET = 3
 TILES = [((120, 140), "conv"), ((360, 140), "ohm"), ((120, 270), "colori"), ((360, 270), "cavo"),
-         ((240, 400), "livella")]
+         ((120, 400), "livella"), ((360, 400), "lente")]
 BACK = (60, 20)
 TITLE = (300, 20)
 BTN_IT = (394, 28)
@@ -78,7 +78,7 @@ class Language(MenuNavigation):
 
     def test_english_button_translates_menu_and_italian_restores_it(self) -> None:
         self.assertEqual(self.tap(BTN_EN), "menu")
-        self.assertEqual(self.lines()[:5], ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL"])
+        self.assertEqual(self.lines()[:6], ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL", "LENS"])
         self.tap(BTN_IT)
         self.assertEqual(self.lines()[0], "CONVERTITORE")
 

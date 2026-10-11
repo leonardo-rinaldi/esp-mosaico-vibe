@@ -2,6 +2,7 @@
 /* Shared look and building blocks of the bench assistant screens. */
 #pragma once
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include "mosaico_raylib_fast.h"
 
@@ -24,6 +25,7 @@ enum {
     UI_LINE_MAX = 40,           /* Bytes per text line, including the terminator. */
     UI_LINES_MAX = 10,
     UI_BLINK_TICKS = 15,        /* Entry cursor blink half-period. */
+    UI_SURFACE_SIZE = 480,      /* Width and height of a raw surface. */
 };
 
 typedef struct {
@@ -50,6 +52,10 @@ typedef struct {
     uint8_t count;
 } ui_lines_t;
 
+/* Draw into a raw RGB565 surface (480 x 480, `stride` pixels per row) instead of Raylib's
+ * target, so the lens can paint over a camera picture. NULL goes back to Raylib. */
+void ui_surface_set(uint16_t *pixels, size_t stride);
+void ui_rect_draw(int x, int y, int w, int h, Color color);
 bool ui_rect_contains(ui_rect_t rect, int32_t x, int32_t y);
 bool ui_pointer_inside(const ui_pointer_t *pointer, ui_rect_t rect);
 void ui_fill(ui_rect_t rect, Color color);

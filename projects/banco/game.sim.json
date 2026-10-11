@@ -12,6 +12,8 @@
     "main/power_status.c",
     "main/screen_conv.c",
     "main/screen_level.c",
+    "main/screen_lens.c",
+    "main/lens_present_host.c",
     "main/level.c",
     "main/screen_menu.c",
     "main/screen_ohm.c",

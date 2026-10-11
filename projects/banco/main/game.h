@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "power_status.h"
+#include "screen_lens.h"
 #include "settings.h"
 
 typedef struct game_t *game_handle_t;
@@ -11,7 +12,7 @@ typedef struct {
     uint16_t height;
 } game_config_t;
 
-/* GAME_SCREEN_MENU is the home screen; its tiles open the five functions, in this order. */
+/* GAME_SCREEN_MENU is the home screen; its tiles open the six functions, in this order. */
 typedef enum {
     GAME_SCREEN_MENU,
     GAME_SCREEN_CONVERTER,
@@ -19,6 +20,7 @@ typedef enum {
     GAME_SCREEN_COLORS,
     GAME_SCREEN_CABLE,
     GAME_SCREEN_LEVEL,
+    GAME_SCREEN_LENS,
     GAME_SCREEN_BATTERY,
     GAME_SCREEN_COUNT,
 } game_screen_t;
@@ -49,6 +51,10 @@ bool game_settings_poll(game_handle_t handle, settings_t *settings);
 void game_settings_get(game_handle_t handle, settings_t *settings);
 /* Latest battery reading from the fuel gauge; the menu header and the battery screen show it. */
 void game_set_battery(game_handle_t handle, const battery_sample_t *sample);
+/* Camera side of the lens (board only): the request says whether the camera should run,
+ * the zoom and the freeze; the status tells the screen what the camera is doing. */
+void game_lens_request(game_handle_t handle, lens_request_t *out);
+void game_set_lens_status(game_handle_t handle, lens_status_t status);
 void game_set_pointer(game_handle_t handle, int32_t x, int32_t y, bool pressed);
 void game_update(game_handle_t handle);
 bool game_render(game_handle_t handle);

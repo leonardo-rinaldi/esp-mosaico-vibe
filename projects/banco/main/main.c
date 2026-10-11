@@ -9,6 +9,7 @@
 #include "freertos/task.h"
 #include "game.h"
 #include "game_config.h"
+#include "lens_camera.h"
 #include "mosaico_game_app.h"
 #include "mosaico_game_save.h"
 
@@ -90,6 +91,7 @@ static uint64_t now_ms(void)
  * damaged record just leaves the defaults: the app must always start. */
 static esp_err_t on_start(void)
 {
+    if (!lens_camera_start()) ESP_LOGW(GAME_NAME, "lens camera task not started");
     if (xTaskCreate(battery_task, "battery", BATTERY_TASK_STACK, NULL, BATTERY_TASK_PRIORITY, NULL) != pdPASS)
         ESP_LOGW(GAME_NAME, "battery task not started");
     const mosaico_save_config_t config = {
@@ -120,6 +122,11 @@ static void on_update(void)
     s_battery_fresh = false;
     portEXIT_CRITICAL(&s_battery_lock);
     if (fresh) game_set_battery(s_game, &battery);
+    /* The lens screen drives the camera task and shows what it reports. */
+    lens_request_t lens;
+    game_lens_request(s_game, &lens);
+    lens_camera_request(&lens);
+    if (lens.active) game_set_lens_status(s_game, lens_camera_status());
     settings_t settings;
     if (game_settings_poll(s_game, &settings)) (void)mosaico_save_request(&s_save, &settings, now_ms());
     (void)mosaico_save_flush(&s_save, now_ms(), false);

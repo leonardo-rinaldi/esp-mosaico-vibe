@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "ui_font.h"
+#include "ui_widgets.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -72,7 +73,7 @@ static void draw_glyph(const glyph_t *glyph, int x, int y, int scale, Color colo
             const int start = col;
             while (col < GLYPH_COLUMNS && (glyph->rows[row] & (1U << (GLYPH_COLUMNS - 1 - col)))) ++col;
             if (col > start)
-                DrawRectangle(x + start * scale, y + row * scale, (col - start) * scale, scale, color);
+                ui_rect_draw(x + start * scale, y + row * scale, (col - start) * scale, scale, color);
         }
     }
 }

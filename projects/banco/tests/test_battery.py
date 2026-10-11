@@ -152,19 +152,19 @@ class BatteryScreen(unittest.TestCase):
         self.step()
 
     def test_menu_shows_no_data_before_a_reading(self) -> None:
-        self.assertEqual(self.lines()[5], "-")
+        self.assertEqual(self.lines()[6], "-")
 
     def test_menu_shows_the_percentage(self) -> None:
         self.feed(sample(percent=78))
-        self.assertEqual(self.lines()[5], "78 %")
+        self.assertEqual(self.lines()[6], "78 %")
 
     def test_menu_marks_charging(self) -> None:
         self.feed(sample(percent=78, ma=250))
-        self.assertEqual(self.lines()[5], "+78 %")
+        self.assertEqual(self.lines()[6], "+78 %")
 
     def test_menu_shows_nothing_for_a_missing_cell(self) -> None:
         self.feed(sample(mv=0, percent=0))
-        self.assertEqual(self.lines()[5], "-")
+        self.assertEqual(self.lines()[6], "-")
 
     def test_tapping_the_indicator_opens_the_screen_and_back_returns(self) -> None:
         self.assertEqual(self.tap(BATTERY_BUTTON), "batteria")
@@ -228,11 +228,11 @@ class BatteryScreen(unittest.TestCase):
         self.feed(sample(percent=64))
         self.rt.control(CONTROL_RESET)
         self.step()
-        self.assertEqual(self.lines()[5], "64 %")
+        self.assertEqual(self.lines()[6], "64 %")
 
     def test_percentage_is_clamped(self) -> None:
         self.feed(sample(percent=250))
-        self.assertEqual(self.lines()[5], "100 %")
+        self.assertEqual(self.lines()[6], "100 %")
 
 
 if __name__ == "__main__":

@@ -17,17 +17,49 @@ bool ui_pointer_inside(const ui_pointer_t *pointer, ui_rect_t rect)
     return pointer && pointer->down && ui_rect_contains(rect, pointer->x, pointer->y);
 }
 
+/* Where rectangles go: NULL means Raylib's own target, otherwise a raw RGB565 surface. */
+static uint16_t *s_surface;
+static size_t s_surface_stride;
+
+void ui_surface_set(uint16_t *pixels, size_t stride)
+{
+    s_surface = pixels;
+    s_surface_stride = stride;
+}
+
+static uint16_t to_rgb565(Color c)
+{
+    return (uint16_t)(((c.r & 0xF8U) << 8) | ((c.g & 0xFCU) << 3) | (c.b >> 3));
+}
+
+void ui_rect_draw(int x, int y, int w, int h, Color color)
+{
+    if (!s_surface) {
+        DrawRectangle(x, y, w, h, color);
+        return;
+    }
+    const int x0 = x < 0 ? 0 : x;
+    const int y0 = y < 0 ? 0 : y;
+    const int x1 = x + w > UI_SURFACE_SIZE ? UI_SURFACE_SIZE : x + w;
+    const int y1 = y + h > UI_SURFACE_SIZE ? UI_SURFACE_SIZE : y + h;
+    const uint16_t value = to_rgb565(color);
+    for (int row = y0; row < y1; ++row) {
+        uint16_t *line = s_surface + (size_t)row * s_surface_stride;
+        for (int col = x0; col < x1; ++col) line[col] = value;
+    }
+}
+
 void ui_fill(ui_rect_t rect, Color color)
 {
-    DrawRectangle(rect.x, rect.y, rect.w, rect.h, color);
+    ui_rect_draw(rect.x, rect.y, rect.w, rect.h, color);
 }
 
 void ui_outline(ui_rect_t rect, int thickness, Color color)
 {
-    DrawRectangle(rect.x, rect.y, rect.w, thickness, color);
-    DrawRectangle(rect.x, rect.y + rect.h - thickness, rect.w, thickness, color);
-    DrawRectangle(rect.x, rect.y, thickness, rect.h, color);
-    DrawRectangle(rect.x + rect.w - thickness, rect.y, thickness, rect.h, color);
+    ui_rect_draw(rect.x, rect.y, rect.w, thickness, color);
+    ui_rect_draw(rect.x, rect.y + rect.h - thickness, rect.w, thickness, color);
+    ui_rect_draw(rect.x, rect.y, thickness, rect.h, color);
+    ui_rect_draw(rect.x + rect.w - thickness, rect.y, thickness, rect.h, color);
 }
 
 void ui_button(ui_rect_t rect, const char *label, int scale, ui_button_style_t style,

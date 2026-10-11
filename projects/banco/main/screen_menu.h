@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-/* Home screen: five large tiles (two columns; an odd last tile spans both), one per function. Tapping a tile opens that
+/* Home screen: six large tiles (two columns; an odd last tile spans both), one per function. Tapping a tile opens that
  * function; the tile order is the order of the function screens in game.h. */
 #pragma once
 #include "i18n.h"
 #include "power_status.h"
 #include "ui_widgets.h"
 
-enum { MENU_TILE_COUNT = 5 };
+enum { MENU_TILE_COUNT = 6 };
 
 /* View lines: one title per tile in tile order, then the battery text of the header. */
 enum { MENU_LINE_BATTERY = MENU_TILE_COUNT, MENU_LINE_COUNT };

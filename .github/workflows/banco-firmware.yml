@@ -91,6 +91,16 @@ jobs:
           --log-dir "$RUNNER_TEMP/idf-logs/banco"
           build
 
+      - name: Show build errors as annotations
+        if: failure()
+        shell: bash
+        run: |
+          # The raw logs are only in the build-logs artifact; surface the error lines
+          # in the run's annotations, where they can be read without downloading.
+          grep -rhE "error:|CMake Error|FAILED:|undefined reference|fatal error" "$RUNNER_TEMP/idf-logs/banco" 2>/dev/null \
+            | sed 's/[[:cntrl:]]//g' | sort -u | head -n 8 | cut -c1-400 \
+            | while IFS= read -r line; do echo "::error title=build::${line}"; done || true
+
       - name: Build the Iris System Update bundle
         shell: bash
         run: |

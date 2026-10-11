@@ -27,7 +27,7 @@ CONTROL_RESET = 3
 BACK = (60, 20)
 BTN_EN = (446, 28)
 TILES = {"conv": (120, 140), "ohm": (360, 140), "colori": (120, 270), "cavo": (360, 270),
-         "livella": (240, 400)}
+         "livella": (120, 400), "lente": (360, 400)}
 # Keypad keys by position on the screens that use it (see keypad.c layout).
 KEYS = {"7": (60, 332), "8": (180, 332), "9": (300, 332)}
 
