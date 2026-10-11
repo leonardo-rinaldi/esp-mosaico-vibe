@@ -1,0 +1,15 @@
+{
+  "schema": "mosaico-game-sim/v1",
+  "sources": [
+    "main/game_module.c",
+    "main/game.c",
+    "main/calc.c",
+    "main/keypad.c",
+    "main/screen_cable.c",
+    "main/screen_color.c",
+    "main/screen_conv.c",
+    "main/screen_ohm.c",
+    "main/ui_font.c",
+    "main/ui_widgets.c"
+  ]
+}
