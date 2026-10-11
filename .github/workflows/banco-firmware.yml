@@ -91,6 +91,35 @@ jobs:
           --log-dir "$RUNNER_TEMP/idf-logs/banco"
           build
 
+      - name: Build the Iris System Update bundle
+        shell: bash
+        run: |
+          # The bundle is the supported install package: it keeps the Recovery
+          # (Vibe Mode) partitions untouched and installs the app into ota_0.
+          python -m venv "$RUNNER_TEMP/iris-venv"
+          "$RUNNER_TEMP/iris-venv/bin/python" -m pip install --disable-pip-version-check \
+            -r submodule/esp-mosaico-utils/ESP-Iris/components/esp_iris/tools/requirements.lock
+          . "$IDF_PATH/export.sh" > /dev/null
+          idf.py -C projects/banco -B projects/banco/build \
+            -D "ESP_IRIS_PYTHON=$RUNNER_TEMP/iris-venv/bin/python" \
+            system-update-bundle
+          mkdir -p dist
+          cp projects/banco/build/banco-system-update.irisfw dist/
+          "$RUNNER_TEMP/iris-venv/bin/python" \
+            submodule/esp-mosaico-utils/ESP-Iris/components/esp_iris/tools/esp_iris.py \
+            bundle --json inspect dist/banco-system-update.irisfw | tee dist/banco-bundle-inspect.json
+          sha256sum dist/banco-system-update.irisfw | tee dist/banco-system-update.irisfw.sha256
+          ls -l dist
+
+      - name: Upload the System Update bundle
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: banco-irisfw
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload firmware build logs
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
