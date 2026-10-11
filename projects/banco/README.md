@@ -2,6 +2,8 @@
 
 Workshop helper for ESP-Mosaico. The app opens on a home menu with four tiles; tap
 one to open that function, and tap "< MENU" in the top-left corner to go back.
+The language (Italian or English) is chosen with the IT / EN buttons at the top right
+of the menu; it applies to every screen and returns to Italian after a restart.
 
 | Tile | Function |
 | --- | --- |
@@ -11,7 +13,7 @@ one to open that function, and tap "< MENU" in the top-left corner to go back.
 | CAVO | Cable cross-section and voltage drop |
 
 Sources: `main/screen_menu.c` (home), `screen_conv/ohm/color/cable.c` (functions),
-`calc.c` (pure maths), `game.c` (screen switching and header).
+`calc.c` (pure maths), `i18n.c` (all Italian and English texts), `game.c` (screen switching and header).
 Tests: `python -m unittest discover -s projects/banco/tests -v`
 (`test_calc.py` for the maths, `test_menu.py` for menu navigation).
 

@@ -4,6 +4,7 @@
     "main/game_module.c",
     "main/game.c",
     "main/calc.c",
+    "main/i18n.c",
     "main/keypad.c",
     "main/screen_cable.c",
     "main/screen_color.c",

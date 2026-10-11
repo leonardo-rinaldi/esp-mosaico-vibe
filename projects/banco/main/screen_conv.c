@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "screen_conv.h"
 #include <math.h>
+#include "i18n.h"
 #include "keypad.h"
 #include "ui_font.h"
 
@@ -69,7 +70,7 @@ void conv_draw(const conv_state_t *state, const ui_pointer_t *pointer, uint32_t 
 
     ui_fill((ui_rect_t){DISPLAY_MARGIN, DISPLAY_TOP, 480 - 2 * DISPLAY_MARGIN, DISPLAY_HEIGHT},
             UI_COLOR_PANEL);
-    ui_text_draw("VALORE", 14, DISPLAY_TOP + 8, LABEL_SCALE, UI_COLOR_MUTED);
+    ui_text_draw(i18n_text(TXT_CONV_VALUE), 14, DISPLAY_TOP + 8, LABEL_SCALE, UI_COLOR_MUTED);
     const char *entry = ui_lines_get(&state->view, CONV_LINE_ENTRY);
     const bool empty = !entry || !*entry;
     ui_text_draw_right(empty ? "0" : entry, ENTRY_RIGHT,

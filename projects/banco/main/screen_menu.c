@@ -32,15 +32,15 @@ _Static_assert((int)MENU_TILE_COUNT <= (int)UI_LINES_MAX, "every tile title need
 
 typedef struct {
     const char *icon;               /* Large text; NULL when the tile draws its own icon. */
-    const char *name;
-    const char *note;
+    text_id_t name;
+    text_id_t note;
 } tile_t;
 
 static const tile_t s_tile[MENU_TILE_COUNT] = {
-    {"kΩ", "CONVERTITORE", "Ω kΩ MΩ V A F W"},
-    {"V I R", "LEGGE DI OHM", "TROVA V, I, R, P"},
-    {NULL, "CODICE COLORI", "4 E 5 BANDE"},
-    {"mm²", "CAVO", "SEZIONE E CADUTA"},
+    {"kΩ", TXT_TILE_CONV_NAME, TXT_TILE_CONV_NOTE},
+    {"V I R", TXT_TILE_OHM_NAME, TXT_TILE_OHM_NOTE},
+    {NULL, TXT_TILE_COLOR_NAME, TXT_TILE_COLOR_NOTE},
+    {"mm²", TXT_TILE_CABLE_NAME, TXT_TILE_CABLE_NOTE},
 };
 
 static const Color COLOR_RESISTOR = {210, 170, 120, 255};
@@ -59,7 +59,18 @@ enum {
     RESISTOR_BAND_PITCH = 20,
     RESISTOR_TOLERANCE_X = 84,
     RESISTOR_LEAD_THICKNESS = 4,
+    LANG_BUTTON_WIDTH = 44, LANG_BUTTON_HEIGHT = 36, LANG_BUTTON_GAP = 8, LANG_BUTTON_TOP = 10,
 };
+
+static const char *const s_lang_label[LANG_COUNT] = {"IT", "EN"};
+
+/* The language buttons sit in the header's top-right corner, EN last. */
+static ui_rect_t language_rect(int lang)
+{
+    const int right = DISPLAY_WIDTH - MENU_MARGIN;
+    const int x = right - (LANG_COUNT - lang) * LANG_BUTTON_WIDTH - (LANG_COUNT - 1 - lang) * LANG_BUTTON_GAP;
+    return (ui_rect_t){(int16_t)x, LANG_BUTTON_TOP, LANG_BUTTON_WIDTH, LANG_BUTTON_HEIGHT};
+}
 
 static ui_rect_t tile_rect(int index)
 {
@@ -72,10 +83,24 @@ static ui_rect_t tile_rect(int index)
     };
 }
 
+void menu_relocalize(menu_state_t *state)
+{
+    for (int i = 0; i < MENU_TILE_COUNT; ++i)
+        ui_lines_printf(&state->view, i, "%s", i18n_text(s_tile[i].name));
+}
+
 void menu_init(menu_state_t *state)
 {
     ui_lines_init(&state->view, MENU_TILE_COUNT);
-    for (int i = 0; i < MENU_TILE_COUNT; ++i) ui_lines_printf(&state->view, i, "%s", s_tile[i].name);
+    menu_relocalize(state);
+}
+
+int menu_language_hit(int32_t x, int32_t y)
+{
+    for (int lang = 0; lang < LANG_COUNT; ++lang) {
+        if (ui_rect_contains(language_rect(lang), x, y)) return lang;
+    }
+    return -1;
 }
 
 int menu_hit(int32_t x, int32_t y)
@@ -120,9 +145,9 @@ static void draw_tile(int index, const ui_pointer_t *pointer)
     } else {
         draw_resistor_icon(rect, rect.y + TILE_ICON_Y);
     }
-    ui_text_draw_center(tile->name, center, rect.y + TILE_NAME_Y, TILE_NAME_SCALE,
+    ui_text_draw_center(i18n_text(tile->name), center, rect.y + TILE_NAME_Y, TILE_NAME_SCALE,
                         pressed ? UI_COLOR_ON_ACCENT : UI_COLOR_TEXT);
-    ui_text_draw_center(tile->note, center, rect.y + TILE_NOTE_Y, TILE_NOTE_SCALE,
+    ui_text_draw_center(i18n_text(tile->note), center, rect.y + TILE_NOTE_Y, TILE_NOTE_SCALE,
                         pressed ? UI_COLOR_ON_ACCENT : UI_COLOR_MUTED);
 }
 
@@ -130,7 +155,11 @@ void menu_draw(const menu_state_t *state, const ui_pointer_t *pointer)
 {
     (void)state;
     ui_text_draw_center("BANCO", DISPLAY_WIDTH / 2, MENU_TITLE_Y, MENU_TITLE_SCALE, UI_COLOR_ACCENT);
-    ui_text_draw_center("SCEGLI UNA FUNZIONE", DISPLAY_WIDTH / 2, MENU_SUBTITLE_Y,
+    ui_text_draw_center(i18n_text(TXT_MENU_SUBTITLE), DISPLAY_WIDTH / 2, MENU_SUBTITLE_Y,
                         MENU_SUBTITLE_SCALE, UI_COLOR_MUTED);
+    for (int lang = 0; lang < LANG_COUNT; ++lang) {
+        ui_button(language_rect(lang), s_lang_label[lang], 2,
+                  i18n_get() == (lang_t)lang ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
+    }
     for (int i = 0; i < MENU_TILE_COUNT; ++i) draw_tile(i, pointer);
 }

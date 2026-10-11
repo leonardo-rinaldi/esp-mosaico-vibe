@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include "game.h"
 #include "game_config.h"
+#include "i18n.h"
 #include "mosaico_raylib_fast.h"
 #include "screen_cable.h"
 #include "screen_color.h"
@@ -23,8 +24,10 @@ enum {
 static const char *const s_screen_name[GAME_SCREEN_COUNT] = {
     "menu", "conv", "ohm", "colori", "cavo",
 };
-static const char *const s_screen_title[GAME_SCREEN_COUNT] = {
-    "BANCO", "CONVERTITORE", "LEGGE DI OHM", "CODICE COLORI", "CADUTA SU CAVO",
+/* Header title of each function screen; the menu has no header. */
+static const text_id_t s_screen_title[GAME_SCREEN_COUNT] = {
+    [GAME_SCREEN_CONVERTER] = TXT_TITLE_CONV, [GAME_SCREEN_OHM] = TXT_TITLE_OHM,
+    [GAME_SCREEN_COLORS] = TXT_TITLE_COLOR, [GAME_SCREEN_CABLE] = TXT_TITLE_CABLE,
 };
 
 struct game_t {
@@ -39,6 +42,15 @@ struct game_t {
     color_state_t color;
     cable_state_t cable;
 };
+
+/* Texts built at input time are rewritten; entered values are kept. */
+static void relocalize_screens(game_handle_t game)
+{
+    menu_relocalize(&game->menu);
+    ohm_relocalize(&game->ohm);
+    color_relocalize(&game->color);
+    cable_relocalize(&game->cable);
+}
 
 static void init_screens(game_handle_t game)
 {
@@ -57,6 +69,7 @@ bool game_create(const game_config_t *config, game_handle_t *ret_handle)
     game_handle_t game = calloc(1, sizeof(*game));
     if (!game) return false;
     game->config = *config;
+    i18n_set(LANG_IT);
     init_screens(game);
     *ret_handle = game;
     return true;
@@ -72,6 +85,7 @@ void game_reset(game_handle_t game)
     if (!game) return;
     game->screen = GAME_SCREEN_MENU;
     game->paused = false;
+    i18n_set(LANG_IT);
     init_screens(game);
 }
 
@@ -95,6 +109,12 @@ static const ui_lines_t *active_view(const struct game_t *game)
 static void tap(game_handle_t game, int32_t x, int32_t y)
 {
     if (game->screen == GAME_SCREEN_MENU) {
+        const int lang = menu_language_hit(x, y);
+        if (lang >= 0) {
+            i18n_set((lang_t)lang);
+            relocalize_screens(game);
+            return;
+        }
         const int tile = menu_hit(x, y);
         /* The tiles are in the same order as the function screens after the menu. */
         if (tile >= 0) game->screen = (game_screen_t)(GAME_SCREEN_CONVERTER + tile);
@@ -137,7 +157,7 @@ static void draw_header(const struct game_t *game)
     const ui_rect_t back = {0, 0, BACK_BUTTON_WIDTH, UI_TAB_HEIGHT};
     ui_button(back, "< MENU", HEADER_TEXT_SCALE, UI_BUTTON_FUNCTION, &game->pointer);
     const int title_center = BACK_BUTTON_WIDTH + (game->config.width - BACK_BUTTON_WIDTH) / 2;
-    ui_text_draw_center(s_screen_title[game->screen], title_center,
+    ui_text_draw_center(i18n_text(s_screen_title[game->screen]), title_center,
                         (UI_TAB_HEIGHT - ui_text_height(HEADER_TEXT_SCALE)) / 2,
                         HEADER_TEXT_SCALE, UI_COLOR_ACCENT);
 }

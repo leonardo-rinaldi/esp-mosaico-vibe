@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "screen_cable.h"
 #include <math.h>
+#include "i18n.h"
 #include "keypad.h"
 #include "ui_font.h"
 
@@ -12,7 +13,8 @@ enum {
     DEFAULT_LIMIT_PERCENT = 4,
 };
 
-static const char *const s_field_label[CABLE_FIELD_COUNT] = {"CORRENTE", "LUNGHEZZA", "CADUTA MAX"};
+static const text_id_t s_field_label[CABLE_FIELD_COUNT] = {TXT_CABLE_CURRENT, TXT_CABLE_LENGTH,
+                                                          TXT_CABLE_MAX_DROP};
 static const char *const s_field_unit[CABLE_FIELD_COUNT] = {"A", "m", "%"};
 
 static double round_to_hundredths(double value)
@@ -36,7 +38,7 @@ static void refresh(cable_state_t *state)
     ui_lines_printf(&state->view, CABLE_LINE_DROP, "%s", "");
     ui_lines_printf(&state->view, CABLE_LINE_HINT, "%s", "");
     if (!valid) {
-        ui_lines_printf(&state->view, CABLE_LINE_HINT, "INSERISCI CORRENTE E LUNGHEZZA");
+        ui_lines_printf(&state->view, CABLE_LINE_HINT, "%s", i18n_text(TXT_CABLE_ENTER_VALUES));
         return;
     }
 
@@ -51,8 +53,8 @@ static void refresh(cable_state_t *state)
     if (index < 0) {
         state->no_section = true;
         (void)calc_format(calc_cable_section(calc_cable_section_count() - 1), number, sizeof(number));
-        ui_lines_printf(&state->view, CABLE_LINE_SECTION, "OLTRE %s mm²", number);
-        ui_lines_printf(&state->view, CABLE_LINE_HINT, "NESSUNA SEZIONE STANDARD BASTA");
+        ui_lines_printf(&state->view, CABLE_LINE_SECTION, "%s %s mm²", i18n_text(TXT_CABLE_OVER), number);
+        ui_lines_printf(&state->view, CABLE_LINE_HINT, "%s", i18n_text(TXT_CABLE_NO_SECTION));
         return;
     }
     (void)calc_format(calc_cable_section(index), number, sizeof(number));
@@ -60,6 +62,11 @@ static void refresh(cable_state_t *state)
     (void)calc_format(round_to_hundredths(drop_v), number, sizeof(number));
     (void)calc_format(round_to_hundredths(drop_percent), second, sizeof(second));
     ui_lines_printf(&state->view, CABLE_LINE_DROP, "%s V   %s %%", number, second);
+}
+
+void cable_relocalize(cable_state_t *state)
+{
+    refresh(state);
 }
 
 void cable_init(cable_state_t *state)
@@ -113,7 +120,7 @@ void cable_draw(const cable_state_t *state, const ui_pointer_t *pointer)
         ui_fill(rect, UI_COLOR_PANEL);
         if (state->selected == i) ui_outline(rect, 3, UI_COLOR_ACCENT);
         const int center = rect.y + rect.h / 2;
-        ui_text_draw(s_field_label[i], LABEL_X, center - ui_text_height(LABEL_SCALE) / 2, LABEL_SCALE,
+        ui_text_draw(i18n_text(s_field_label[i]), LABEL_X, center - ui_text_height(LABEL_SCALE) / 2, LABEL_SCALE,
                      UI_COLOR_MUTED);
         const char *value = ui_lines_get(&state->view, CABLE_LINE_ENTRIES + i);
         const bool empty = !value || !*value;
@@ -122,13 +129,13 @@ void cable_draw(const cable_state_t *state, const ui_pointer_t *pointer)
         ui_text_draw(s_field_unit[i], UNIT_X, center - ui_text_height(LABEL_SCALE) / 2, LABEL_SCALE,
                      UI_COLOR_MUTED);
     }
-    ui_button(toggle_rect(TOGGLE_MATERIAL_TOP, 0), "RAME", 2,
+    ui_button(toggle_rect(TOGGLE_MATERIAL_TOP, 0), i18n_text(TXT_CABLE_COPPER), 2,
               state->material == CABLE_COPPER ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
-    ui_button(toggle_rect(TOGGLE_MATERIAL_TOP, 1), "ALLUMINIO", 2,
+    ui_button(toggle_rect(TOGGLE_MATERIAL_TOP, 1), i18n_text(TXT_CABLE_ALUMINIUM), 2,
               state->material == CABLE_ALUMINIUM ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
-    ui_button(toggle_rect(TOGGLE_SYSTEM_TOP, 0), "MONOFASE 230V", 2,
+    ui_button(toggle_rect(TOGGLE_SYSTEM_TOP, 0), i18n_text(TXT_CABLE_SINGLE_PHASE), 2,
               state->system == CABLE_SINGLE_PHASE ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
-    ui_button(toggle_rect(TOGGLE_SYSTEM_TOP, 1), "TRIFASE 400V", 2,
+    ui_button(toggle_rect(TOGGLE_SYSTEM_TOP, 1), i18n_text(TXT_CABLE_THREE_PHASE), 2,
               state->system == CABLE_THREE_PHASE ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
 
     const ui_rect_t result = {6, RESULT_TOP, 468, RESULT_HEIGHT};
@@ -136,7 +143,7 @@ void cable_draw(const cable_state_t *state, const ui_pointer_t *pointer)
     const char *drop = ui_lines_get(&state->view, CABLE_LINE_DROP);
     const bool found = drop && *drop;
     ui_fill(result, found ? UI_COLOR_OK_BG : UI_COLOR_PANEL);
-    ui_text_draw("SEZIONE MIN", 16, result.y + 6, LABEL_SCALE, UI_COLOR_MUTED);
+    ui_text_draw(i18n_text(TXT_CABLE_MIN_SECTION), 16, result.y + 6, LABEL_SCALE, UI_COLOR_MUTED);
     ui_text_draw_right(ui_lines_get(&state->view, CABLE_LINE_SECTION), 464, result.y + 4, VALUE_SCALE,
                        found ? UI_COLOR_OK : UI_COLOR_TEXT);
     if (found)

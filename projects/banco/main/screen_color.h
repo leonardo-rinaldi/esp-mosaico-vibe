@@ -16,5 +16,7 @@ typedef struct {
 } color_state_t;
 
 void color_init(color_state_t *state);
+/* Rebuild the texts that depend on the language, keeping the entered values. */
+void color_relocalize(color_state_t *state);
 void color_tap(color_state_t *state, int32_t x, int32_t y);
 void color_draw(const color_state_t *state, const ui_pointer_t *pointer);

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "screen_ohm.h"
 #include <math.h>
+#include "i18n.h"
 #include "keypad.h"
 #include "ui_font.h"
 
@@ -49,10 +50,15 @@ static void refresh(ohm_state_t *state)
 
     const char *hint = "";
     if (state->status == OHM_NEED_TWO)
-        hint = state->known_count < 2 ? "INSERISCI DUE VALORI" : "TROPPI VALORI: CANCELLA UNA RIGA";
+        hint = state->known_count < 2 ? i18n_text(TXT_OHM_ENTER_TWO) : i18n_text(TXT_OHM_TOO_MANY);
     else if (state->status == OHM_UNDEFINED)
-        hint = "CALCOLO IMPOSSIBILE";
+        hint = i18n_text(TXT_OHM_IMPOSSIBLE);
     ui_lines_printf(&state->view, OHM_LINE_HINT, "%s", hint);
+}
+
+void ohm_relocalize(ohm_state_t *state)
+{
+    refresh(state);
 }
 
 void ohm_init(ohm_state_t *state)

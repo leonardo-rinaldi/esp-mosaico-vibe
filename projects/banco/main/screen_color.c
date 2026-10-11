@@ -2,6 +2,7 @@
 #include "screen_color.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include "i18n.h"
 #include "ui_font.h"
 
 enum {
@@ -24,14 +25,10 @@ static const Color s_color[COLOR_COUNT] = {
     [COLOR_GREY] = {140, 140, 150, 255}, [COLOR_WHITE] = {245, 245, 245, 255},
     [COLOR_GOLD] = {212, 175, 55, 255},  [COLOR_SILVER] = {190, 190, 200, 255},
 };
-static const char *const s_color_name[COLOR_COUNT] = {
-    [COLOR_BLACK] = "NERO", [COLOR_BROWN] = "MARR", [COLOR_RED] = "ROSSO",
-    [COLOR_ORANGE] = "ARAN", [COLOR_YELLOW] = "GIALLO", [COLOR_GREEN] = "VERDE",
-    [COLOR_BLUE] = "BLU", [COLOR_VIOLET] = "VIOLA", [COLOR_GREY] = "GRIGIO",
-    [COLOR_WHITE] = "BIANCO", [COLOR_GOLD] = "ORO", [COLOR_SILVER] = "ARG",
-};
-static const char *const s_kind_name[] = {
-    [BAND_DIGIT] = "CIFRA", [BAND_MULTIPLIER] = "MOLTIPLICATORE", [BAND_TOLERANCE] = "TOLLERANZA",
+_Static_assert((int)COLOR_COUNT == (int)I18N_COLOR_COUNT, "one label per resistor colour");
+static const text_id_t s_kind_name[] = {
+    [BAND_DIGIT] = TXT_KIND_DIGIT, [BAND_MULTIPLIER] = TXT_KIND_MULTIPLIER,
+    [BAND_TOLERANCE] = TXT_KIND_TOLERANCE,
 };
 
 /* Left edge of each band on the resistor drawing, per band count. */
@@ -73,8 +70,14 @@ static void refresh(color_state_t *state)
         ui_lines_printf(&state->view, COLOR_LINE_VALUE, "-");
         ui_lines_printf(&state->view, COLOR_LINE_TOLERANCE, "-");
     }
-    ui_lines_printf(&state->view, COLOR_LINE_BAND, "BANDA %d: %s", state->selected + 1,
-                    s_kind_name[calc_band_kind(state->bands, state->selected)]);
+    ui_lines_printf(&state->view, COLOR_LINE_BAND, "%s %d: %s", i18n_text(TXT_COLOR_BAND_WORD),
+                    state->selected + 1,
+                    i18n_text(s_kind_name[calc_band_kind(state->bands, state->selected)]));
+}
+
+void color_relocalize(color_state_t *state)
+{
+    refresh(state);
 }
 
 void color_init(color_state_t *state)
@@ -155,16 +158,16 @@ static void draw_palette(const color_state_t *state)
         DrawCircle(cx, cy, PALETTE_RADIUS + 3, chosen ? UI_COLOR_ACCENT : UI_COLOR_LINE);
         DrawCircle(cx, cy, PALETTE_RADIUS, allowed ? s_color[color] : UI_COLOR_PANEL);
         if (!allowed) DrawCircle(cx, cy, 6, UI_COLOR_LINE);
-        ui_text_draw_center(s_color_name[color], cx, cy + LABEL_OFFSET, 2,
+        ui_text_draw_center(i18n_color_name(color), cx, cy + LABEL_OFFSET, 2,
                             allowed ? UI_COLOR_MUTED : UI_COLOR_LINE);
     }
 }
 
 void color_draw(const color_state_t *state, const ui_pointer_t *pointer)
 {
-    ui_button(toggle_rect(0), "4 BANDE", 2,
+    ui_button(toggle_rect(0), i18n_text(TXT_COLOR_4_BANDS), 2,
               state->bands == RESISTOR_MIN_BANDS ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
-    ui_button(toggle_rect(1), "5 BANDE", 2,
+    ui_button(toggle_rect(1), i18n_text(TXT_COLOR_5_BANDS), 2,
               state->bands == RESISTOR_MAX_BANDS ? UI_BUTTON_SELECTED : UI_BUTTON_NORMAL, pointer);
     draw_resistor(state);
     ui_text_draw_center(ui_lines_get(&state->view, COLOR_LINE_VALUE), 240, VALUE_Y, VALUE_SCALE,
@@ -174,5 +177,5 @@ void color_draw(const color_state_t *state, const ui_pointer_t *pointer)
                    ui_lines_get(&state->view, COLOR_LINE_BAND));
     ui_text_draw_center(info, 240, INFO_Y, INFO_SCALE, UI_COLOR_MUTED);
     draw_palette(state);
-    ui_text_draw_center("TOCCA UNA BANDA PER SCEGLIERLA", 240, FOOTER_Y, 2, UI_COLOR_LINE);
+    ui_text_draw_center(i18n_text(TXT_COLOR_FOOTER), 240, FOOTER_Y, 2, UI_COLOR_LINE);
 }

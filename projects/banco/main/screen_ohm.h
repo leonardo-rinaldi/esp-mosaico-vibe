@@ -22,5 +22,7 @@ typedef struct {
 } ohm_state_t;
 
 void ohm_init(ohm_state_t *state);
+/* Rebuild the texts that depend on the language, keeping the entered values. */
+void ohm_relocalize(ohm_state_t *state);
 void ohm_tap(ohm_state_t *state, int32_t x, int32_t y);
 void ohm_draw(const ohm_state_t *state, const ui_pointer_t *pointer);

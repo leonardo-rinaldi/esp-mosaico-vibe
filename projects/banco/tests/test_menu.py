@@ -23,6 +23,8 @@ CONTROL_RESET = 3
 TILES = [((120, 180), "conv"), ((360, 180), "ohm"), ((120, 380), "colori"), ((360, 380), "cavo")]
 BACK = (60, 20)
 TITLE = (300, 20)
+BTN_IT = (394, 28)
+BTN_EN = (446, 28)
 
 
 class MenuNavigation(unittest.TestCase):
@@ -64,6 +66,52 @@ class MenuNavigation(unittest.TestCase):
         self.rt.control(CONTROL_RESET)
         self.step()
         self.assertEqual(self.rt.metadata()["screen"], "menu")
+
+
+class Language(MenuNavigation):
+    def lines(self) -> list:
+        return self.rt.metadata()["lines"]
+
+    def test_starts_in_italian(self) -> None:
+        self.assertEqual(self.lines()[:2], ["CONVERTITORE", "LEGGE DI OHM"])
+
+    def test_english_button_translates_menu_and_italian_restores_it(self) -> None:
+        self.assertEqual(self.tap(BTN_EN), "menu")
+        self.assertEqual(self.lines(), ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE"])
+        self.tap(BTN_IT)
+        self.assertEqual(self.lines()[0], "CONVERTITORE")
+
+    def test_language_buttons_do_not_open_a_tile(self) -> None:
+        self.assertEqual(self.tap(BTN_EN), "menu")
+        self.assertEqual(self.tap(BTN_IT), "menu")
+
+    def test_english_hint_on_ohm_screen(self) -> None:
+        self.tap(BTN_EN)
+        self.tap(TILES[1][0])
+        self.assertIn("ENTER TWO VALUES", self.lines())
+
+    def test_english_cable_and_colour_texts(self) -> None:
+        self.tap(BTN_EN)
+        self.tap(TILES[3][0])
+        self.assertIn("ENTER CURRENT AND LENGTH", self.lines())
+        self.tap(BACK)
+        self.tap(TILES[2][0])
+        self.assertIn("BAND 1: DIGIT", self.lines())
+
+    def test_switching_language_keeps_entered_values(self) -> None:
+        self.tap(TILES[1][0])
+        self.tap((60, 400))     # a keypad key; any digit press changes the first row
+        before = self.lines()[:4]
+        self.tap(BACK)
+        self.tap(BTN_EN)
+        self.tap(TILES[1][0])
+        self.assertEqual(self.lines()[:4], before)
+
+    def test_reset_returns_to_italian(self) -> None:
+        self.tap(BTN_EN)
+        self.rt.control(CONTROL_RESET)
+        self.step()
+        self.assertEqual(self.lines()[0], "CONVERTITORE")
 
 
 if __name__ == "__main__":

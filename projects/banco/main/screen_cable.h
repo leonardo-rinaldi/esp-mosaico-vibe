@@ -23,5 +23,7 @@ typedef struct {
 } cable_state_t;
 
 void cable_init(cable_state_t *state);
+/* Rebuild the texts that depend on the language, keeping the entered values. */
+void cable_relocalize(cable_state_t *state);
 void cable_tap(cable_state_t *state, int32_t x, int32_t y);
 void cable_draw(const cable_state_t *state, const ui_pointer_t *pointer);

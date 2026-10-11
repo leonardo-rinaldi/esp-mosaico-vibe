@@ -1,0 +1,86 @@
+// SPDX-License-Identifier: Apache-2.0
+#include "i18n.h"
+
+static lang_t s_lang = LANG_IT;
+
+static const char *const s_text[LANG_COUNT][TXT_COUNT] = {
+    [LANG_IT] = {
+        [TXT_MENU_SUBTITLE] = "SCEGLI UNA FUNZIONE",
+        [TXT_TILE_CONV_NAME] = "CONVERTITORE", [TXT_TILE_CONV_NOTE] = "Ω kΩ MΩ V A F W",
+        [TXT_TILE_OHM_NAME] = "LEGGE DI OHM", [TXT_TILE_OHM_NOTE] = "TROVA V, I, R, P",
+        [TXT_TILE_COLOR_NAME] = "CODICE COLORI", [TXT_TILE_COLOR_NOTE] = "4 E 5 BANDE",
+        [TXT_TILE_CABLE_NAME] = "CAVO", [TXT_TILE_CABLE_NOTE] = "SEZIONE E CADUTA",
+        [TXT_TITLE_CONV] = "CONVERTITORE", [TXT_TITLE_OHM] = "LEGGE DI OHM",
+        [TXT_TITLE_COLOR] = "CODICE COLORI", [TXT_TITLE_CABLE] = "CADUTA SU CAVO",
+        [TXT_CONV_VALUE] = "VALORE",
+        [TXT_OHM_ENTER_TWO] = "INSERISCI DUE VALORI",
+        [TXT_OHM_TOO_MANY] = "TROPPI VALORI: CANCELLA UNA RIGA",
+        [TXT_OHM_IMPOSSIBLE] = "CALCOLO IMPOSSIBILE",
+        [TXT_COLOR_4_BANDS] = "4 BANDE", [TXT_COLOR_5_BANDS] = "5 BANDE",
+        [TXT_COLOR_BAND_WORD] = "BANDA",
+        [TXT_COLOR_FOOTER] = "TOCCA UNA BANDA PER SCEGLIERLA",
+        [TXT_KIND_DIGIT] = "CIFRA", [TXT_KIND_MULTIPLIER] = "MOLTIPLICATORE",
+        [TXT_KIND_TOLERANCE] = "TOLLERANZA",
+        [TXT_CABLE_CURRENT] = "CORRENTE", [TXT_CABLE_LENGTH] = "LUNGHEZZA",
+        [TXT_CABLE_MAX_DROP] = "CADUTA MAX",
+        [TXT_CABLE_ENTER_VALUES] = "INSERISCI CORRENTE E LUNGHEZZA",
+        [TXT_CABLE_OVER] = "OLTRE", [TXT_CABLE_NO_SECTION] = "NESSUNA SEZIONE STANDARD BASTA",
+        [TXT_CABLE_COPPER] = "RAME", [TXT_CABLE_ALUMINIUM] = "ALLUMINIO",
+        [TXT_CABLE_SINGLE_PHASE] = "MONOFASE 230V", [TXT_CABLE_THREE_PHASE] = "TRIFASE 400V",
+        [TXT_CABLE_MIN_SECTION] = "SEZIONE MIN",
+    },
+    [LANG_EN] = {
+        [TXT_MENU_SUBTITLE] = "CHOOSE A FUNCTION",
+        [TXT_TILE_CONV_NAME] = "CONVERTER", [TXT_TILE_CONV_NOTE] = "Ω kΩ MΩ V A F W",
+        [TXT_TILE_OHM_NAME] = "OHMS LAW", [TXT_TILE_OHM_NOTE] = "FIND V, I, R, P",
+        [TXT_TILE_COLOR_NAME] = "COLOR CODE", [TXT_TILE_COLOR_NOTE] = "4 AND 5 BANDS",
+        [TXT_TILE_CABLE_NAME] = "CABLE", [TXT_TILE_CABLE_NOTE] = "SIZE AND DROP",
+        [TXT_TITLE_CONV] = "CONVERTER", [TXT_TITLE_OHM] = "OHMS LAW",
+        [TXT_TITLE_COLOR] = "COLOR CODE", [TXT_TITLE_CABLE] = "CABLE VOLTAGE DROP",
+        [TXT_CONV_VALUE] = "VALUE",
+        [TXT_OHM_ENTER_TWO] = "ENTER TWO VALUES",
+        [TXT_OHM_TOO_MANY] = "TOO MANY VALUES: CLEAR A ROW",
+        [TXT_OHM_IMPOSSIBLE] = "CANNOT CALCULATE",
+        [TXT_COLOR_4_BANDS] = "4 BANDS", [TXT_COLOR_5_BANDS] = "5 BANDS",
+        [TXT_COLOR_BAND_WORD] = "BAND",
+        [TXT_COLOR_FOOTER] = "TAP A BAND TO SELECT IT",
+        [TXT_KIND_DIGIT] = "DIGIT", [TXT_KIND_MULTIPLIER] = "MULTIPLIER",
+        [TXT_KIND_TOLERANCE] = "TOLERANCE",
+        [TXT_CABLE_CURRENT] = "CURRENT", [TXT_CABLE_LENGTH] = "LENGTH",
+        [TXT_CABLE_MAX_DROP] = "MAX DROP",
+        [TXT_CABLE_ENTER_VALUES] = "ENTER CURRENT AND LENGTH",
+        [TXT_CABLE_OVER] = "OVER", [TXT_CABLE_NO_SECTION] = "NO STANDARD SIZE IS ENOUGH",
+        [TXT_CABLE_COPPER] = "COPPER", [TXT_CABLE_ALUMINIUM] = "ALUMINIUM",
+        [TXT_CABLE_SINGLE_PHASE] = "SINGLE-PHASE 230V", [TXT_CABLE_THREE_PHASE] = "THREE-PHASE 400V",
+        [TXT_CABLE_MIN_SECTION] = "MIN SIZE",
+    },
+};
+
+static const char *const s_color[LANG_COUNT][I18N_COLOR_COUNT] = {
+    [LANG_IT] = {"NERO", "MARR", "ROSSO", "ARAN", "GIALLO", "VERDE",
+                 "BLU", "VIOLA", "GRIGIO", "BIANCO", "ORO", "ARG"},
+    [LANG_EN] = {"BLACK", "BROWN", "RED", "ORNG", "YELLOW", "GREEN",
+                 "BLUE", "VIOLET", "GREY", "WHITE", "GOLD", "SILVER"},
+};
+
+void i18n_set(lang_t lang)
+{
+    if ((unsigned)lang < LANG_COUNT) s_lang = lang;
+}
+
+lang_t i18n_get(void)
+{
+    return s_lang;
+}
+
+const char *i18n_text(text_id_t id)
+{
+    if ((unsigned)id >= TXT_COUNT) return "";
+    const char *text = s_text[s_lang][id];
+    return text ? text : "";
+}
+
+const char *i18n_color_name(int color)
+{
+    return (unsigned)color < I18N_COLOR_COUNT ? s_color[s_lang][color] : "";
+}
