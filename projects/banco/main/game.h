@@ -2,6 +2,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include "power_status.h"
 #include "settings.h"
 
 typedef struct game_t *game_handle_t;
@@ -18,6 +19,7 @@ typedef enum {
     GAME_SCREEN_COLORS,
     GAME_SCREEN_CABLE,
     GAME_SCREEN_LEVEL,
+    GAME_SCREEN_BATTERY,
     GAME_SCREEN_COUNT,
 } game_screen_t;
 
@@ -45,6 +47,8 @@ void game_set_paused(game_handle_t handle, bool paused);
 void game_settings_apply(game_handle_t handle, const settings_t *settings);
 bool game_settings_poll(game_handle_t handle, settings_t *settings);
 void game_settings_get(game_handle_t handle, settings_t *settings);
+/* Latest battery reading from the fuel gauge; the menu header and the battery screen show it. */
+void game_set_battery(game_handle_t handle, const battery_sample_t *sample);
 void game_set_pointer(game_handle_t handle, int32_t x, int32_t y, bool pressed);
 void game_update(game_handle_t handle);
 bool game_render(game_handle_t handle);

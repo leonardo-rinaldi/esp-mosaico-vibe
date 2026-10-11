@@ -14,11 +14,15 @@ every screen are saved in the device's NVS and come back after a restart.
 | CAVO | Cable cross-section and voltage drop |
 | LIVELLA | Spirit level and inclinometer from the accelerometer: FLAT (bubble vial, X and Y angles) or ON EDGE (angle from vertical, for pipes and walls), slope in percent, ZERO button |
 
+The battery level (from the BQ27220 fuel gauge) is shown top-left in the menu header; tap it for
+the battery screen: percentage, charging or not, voltage, current, temperature and time left or
+to full. The gauge is read by a small task every 2 s, started 3 s after boot.
+
 Sources: `main/screen_menu.c` (home), `screen_conv/ohm/color/cable.c` (functions),
-`calc.c` and `level.c` (pure maths), `settings.h` (what is remembered), `i18n.c` (all Italian and English texts), `game.c` (screen switching and header).
+`calc.c`, `level.c` and `power_status.c` (pure logic), `settings.h` (what is remembered), `i18n.c` (all Italian and English texts), `game.c` (screen switching and header).
 Tests: `python -m unittest discover -s projects/banco/tests -v`
 (`test_calc.py` and `test_level.py` for the maths, `test_menu.py` for navigation and language,
-`test_level.py` for the level screen, `test_settings.py` for saving and restoring).
+`test_level.py` for the level screen, `test_settings.py` for saving and restoring, `test_battery.py` for the battery).
 
 The axis directions of the accelerometer on the real board are set by `LEVEL_SIGN_X` and
 `LEVEL_SIGN_Y` in `main/level.c`; flip them if a tilt shows the wrong way on the device.

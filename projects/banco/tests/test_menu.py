@@ -78,7 +78,7 @@ class Language(MenuNavigation):
 
     def test_english_button_translates_menu_and_italian_restores_it(self) -> None:
         self.assertEqual(self.tap(BTN_EN), "menu")
-        self.assertEqual(self.lines(), ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL"])
+        self.assertEqual(self.lines()[:5], ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL"])
         self.tap(BTN_IT)
         self.assertEqual(self.lines()[0], "CONVERTITORE")
 

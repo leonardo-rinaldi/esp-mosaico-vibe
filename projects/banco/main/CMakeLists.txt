@@ -1,8 +1,8 @@
 idf_component_register(
     SRCS "main.c" "game.c" "calc.c" "i18n.c" "keypad.c" "screen_cable.c" "screen_color.c"
-         "screen_conv.c" "screen_level.c" "level.c" "screen_menu.c" "screen_ohm.c" "ui_font.c" "ui_widgets.c"
+         "screen_battery.c" "power_status.c" "screen_conv.c" "screen_level.c" "level.c" "screen_menu.c" "screen_ohm.c" "ui_font.c" "ui_widgets.c"
     INCLUDE_DIRS "."
-    REQUIRES mosaico_game_app mosaico_game_save mosaico_raylib_fast esp-gsp esp_timer)
+    REQUIRES mosaico_game_app mosaico_game_save mosaico_raylib_fast esp-gsp esp_timer esp-mosaico-bsp)
 
 # GSP needs an image to bind the Raylib framebuffer. This generated placeholder
 # is embedded in the application; no external game resource partition is used.

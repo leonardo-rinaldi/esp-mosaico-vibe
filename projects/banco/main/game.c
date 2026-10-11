@@ -9,6 +9,7 @@
 #include "game_config.h"
 #include "i18n.h"
 #include "mosaico_raylib_fast.h"
+#include "screen_battery.h"
 #include "screen_cable.h"
 #include "screen_color.h"
 #include "screen_conv.h"
@@ -24,13 +25,13 @@ enum {
 };
 
 static const char *const s_screen_name[GAME_SCREEN_COUNT] = {
-    "menu", "conv", "ohm", "colori", "cavo", "livella",
+    "menu", "conv", "ohm", "colori", "cavo", "livella", "batteria",
 };
 /* Header title of each function screen; the menu has no header. */
 static const text_id_t s_screen_title[GAME_SCREEN_COUNT] = {
     [GAME_SCREEN_CONVERTER] = TXT_TITLE_CONV, [GAME_SCREEN_OHM] = TXT_TITLE_OHM,
     [GAME_SCREEN_COLORS] = TXT_TITLE_COLOR, [GAME_SCREEN_CABLE] = TXT_TITLE_CABLE,
-    [GAME_SCREEN_LEVEL] = TXT_TITLE_LEVEL,
+    [GAME_SCREEN_LEVEL] = TXT_TITLE_LEVEL, [GAME_SCREEN_BATTERY] = TXT_TITLE_BATTERY,
 };
 
 struct game_t {
@@ -45,6 +46,7 @@ struct game_t {
     color_state_t color;
     cable_state_t cable;
     level_state_t level;
+    battery_screen_t battery;
     settings_t seen;                /* Last values reported by game_settings_poll. */
 };
 
@@ -56,16 +58,22 @@ static void relocalize_screens(game_handle_t game)
     color_relocalize(&game->color);
     cable_relocalize(&game->cable);
     level_relocalize(&game->level);
+    battery_screen_relocalize(&game->battery);
 }
 
 static void init_screens(game_handle_t game)
 {
+    const battery_sample_t last_battery = game->battery.sample;
     menu_init(&game->menu);
     conv_init(&game->conv);
     ohm_init(&game->ohm);
     color_init(&game->color);
     cable_init(&game->cable);
     level_init(&game->level);
+    battery_screen_init(&game->battery);
+    /* The gauge keeps reporting on its own, so a reset must not forget the last reading. */
+    if (last_battery.valid) battery_screen_set(&game->battery, &last_battery);
+    menu_set_battery(&game->menu, &game->battery.sample);
 }
 
 bool game_create(const game_config_t *config, game_handle_t *ret_handle)
@@ -214,6 +222,13 @@ bool game_settings_poll(game_handle_t game, settings_t *out)
     return true;
 }
 
+void game_set_battery(game_handle_t game, const battery_sample_t *sample)
+{
+    if (!game || !sample) return;
+    battery_screen_set(&game->battery, sample);
+    menu_set_battery(&game->menu, &game->battery.sample);
+}
+
 void game_set_paused(game_handle_t game, bool paused)
 {
     if (game) game->paused = paused;
@@ -228,6 +243,7 @@ static const ui_lines_t *active_view(const struct game_t *game)
     case GAME_SCREEN_COLORS: return &game->color.view;
     case GAME_SCREEN_CABLE: return &game->cable.view;
     case GAME_SCREEN_LEVEL: return &game->level.view;
+    case GAME_SCREEN_BATTERY: return &game->battery.view;
     default: return &game->menu.view;
     }
 }
@@ -239,6 +255,10 @@ static void tap(game_handle_t game, int32_t x, int32_t y)
         if (lang >= 0) {
             i18n_set((lang_t)lang);
             relocalize_screens(game);
+            return;
+        }
+        if (menu_battery_hit(x, y)) {
+            game->screen = GAME_SCREEN_BATTERY;
             return;
         }
         const int tile = menu_hit(x, y);
@@ -311,6 +331,7 @@ bool game_render(game_handle_t game)
     case GAME_SCREEN_COLORS: color_draw(&game->color, &game->pointer); break;
     case GAME_SCREEN_CABLE: cable_draw(&game->cable, &game->pointer); break;
     case GAME_SCREEN_LEVEL: level_draw(&game->level, &game->pointer); break;
+    case GAME_SCREEN_BATTERY: battery_screen_draw(&game->battery); break;
     default: break;
     }
     EndDrawing();

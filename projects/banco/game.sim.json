@@ -8,6 +8,8 @@
     "main/keypad.c",
     "main/screen_cable.c",
     "main/screen_color.c",
+    "main/screen_battery.c",
+    "main/power_status.c",
     "main/screen_conv.c",
     "main/screen_level.c",
     "main/level.c",

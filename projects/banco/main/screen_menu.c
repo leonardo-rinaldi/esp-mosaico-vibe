@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "screen_menu.h"
 #include <stddef.h>
+#include "screen_battery.h"
 #include "ui_font.h"
 
 enum {
@@ -27,7 +28,7 @@ enum {
                   / TILE_ROWS,
 };
 
-_Static_assert((int)MENU_TILE_COUNT <= (int)UI_LINES_MAX, "every tile title needs a view line");
+_Static_assert((int)MENU_LINE_COUNT <= (int)UI_LINES_MAX, "every tile title and the battery need a view line");
 
 typedef struct {
     const char *icon;               /* Large text; NULL when the tile draws its own icon. */
@@ -59,6 +60,9 @@ enum {
     RESISTOR_BAND_PITCH = 20,
     RESISTOR_TOLERANCE_X = 84,
     RESISTOR_LEAD_THICKNESS = 4,
+    BATTERY_HIT_X = 6, BATTERY_HIT_Y = 4, BATTERY_HIT_W = 128, BATTERY_HIT_H = 44,
+    BATTERY_ICON_X = 14, BATTERY_ICON_Y = 15, BATTERY_ICON_W = 44, BATTERY_ICON_H = 22,
+    BATTERY_TEXT_X = 66, BATTERY_TEXT_Y = 17, BATTERY_TEXT_SCALE = 2,
     LANG_BUTTON_WIDTH = 44, LANG_BUTTON_HEIGHT = 36, LANG_BUTTON_GAP = 8, LANG_BUTTON_TOP = 10,
 };
 
@@ -90,10 +94,25 @@ void menu_relocalize(menu_state_t *state)
         ui_lines_printf(&state->view, i, "%s", i18n_text(s_tile[i].name));
 }
 
+void menu_set_battery(menu_state_t *state, const battery_sample_t *sample)
+{
+    state->battery = *sample;
+    char text[UI_LINE_MAX];
+    battery_short_text(sample, text, sizeof(text));
+    ui_lines_printf(&state->view, MENU_LINE_BATTERY, "%s", text);
+}
+
+bool menu_battery_hit(int32_t x, int32_t y)
+{
+    return ui_rect_contains((ui_rect_t){BATTERY_HIT_X, BATTERY_HIT_Y, BATTERY_HIT_W, BATTERY_HIT_H}, x, y);
+}
+
 void menu_init(menu_state_t *state)
 {
-    ui_lines_init(&state->view, MENU_TILE_COUNT);
+    ui_lines_init(&state->view, MENU_LINE_COUNT);
+    state->battery = (battery_sample_t){0};
     menu_relocalize(state);
+    menu_set_battery(state, &state->battery);
 }
 
 int menu_language_hit(int32_t x, int32_t y)
@@ -154,7 +173,13 @@ static void draw_tile(int index, const ui_pointer_t *pointer)
 
 void menu_draw(const menu_state_t *state, const ui_pointer_t *pointer)
 {
-    (void)state;
+    const battery_sample_t *battery = &state->battery;
+    const battery_state_t kind = battery_state(battery);
+    const bool known = kind != BATTERY_UNKNOWN && kind != BATTERY_ABSENT;
+    battery_draw_icon((ui_rect_t){BATTERY_ICON_X, BATTERY_ICON_Y, BATTERY_ICON_W, BATTERY_ICON_H},
+                      known ? battery->percent : 0, battery_level_color(battery));
+    ui_text_draw(ui_lines_get(&state->view, MENU_LINE_BATTERY), BATTERY_TEXT_X, BATTERY_TEXT_Y,
+                 BATTERY_TEXT_SCALE, known ? battery_level_color(battery) : UI_COLOR_MUTED);
     ui_text_draw_center("BANCO", DISPLAY_WIDTH / 2, MENU_TITLE_Y, MENU_TITLE_SCALE, UI_COLOR_ACCENT);
     ui_text_draw_center(i18n_text(TXT_MENU_SUBTITLE), DISPLAY_WIDTH / 2, MENU_SUBTITLE_Y,
                         MENU_SUBTITLE_SCALE, UI_COLOR_MUTED);
