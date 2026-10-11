@@ -34,6 +34,11 @@ static void refresh(conv_state_t *state)
         : -1;
 }
 
+void conv_relocalize(conv_state_t *state)
+{
+    refresh(state);
+}
+
 void conv_init(conv_state_t *state)
 {
     state->qty = CALC_QTY_RESISTANCE;

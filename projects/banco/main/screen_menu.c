@@ -12,22 +12,21 @@ enum {
     MENU_TITLE_Y = 12,
     MENU_SUBTITLE_SCALE = 2,
     MENU_SUBTITLE_Y = 56,
-    TILE_ICON_SCALE = 5,
-    TILE_ICON_Y = 26,               /* From the tile top. */
+    TILE_ICON_SCALE = 4,
+    TILE_ICON_Y = 12,               /* From the tile top. */
     TILE_NAME_SCALE = 2,
-    TILE_NAME_Y = 100,
+    TILE_NAME_Y = 56,
     TILE_NOTE_SCALE = 2,
-    TILE_NOTE_Y = 132,
+    TILE_NOTE_Y = 84,
     TILE_BORDER = 2,
     DISPLAY_WIDTH = 480,
     DISPLAY_HEIGHT = 480,
-    TILE_ROWS = MENU_TILE_COUNT / MENU_COLUMNS,
+    TILE_ROWS = (MENU_TILE_COUNT + MENU_COLUMNS - 1) / MENU_COLUMNS,
     TILE_WIDTH = (DISPLAY_WIDTH - 2 * MENU_MARGIN - (MENU_COLUMNS - 1) * MENU_GAP) / MENU_COLUMNS,
     TILE_HEIGHT = (DISPLAY_HEIGHT - MENU_HEADER_HEIGHT - MENU_MARGIN - (TILE_ROWS - 1) * MENU_GAP)
                   / TILE_ROWS,
 };
 
-_Static_assert(MENU_TILE_COUNT % MENU_COLUMNS == 0, "tiles must fill whole rows");
 _Static_assert((int)MENU_TILE_COUNT <= (int)UI_LINES_MAX, "every tile title needs a view line");
 
 typedef struct {
@@ -41,6 +40,7 @@ static const tile_t s_tile[MENU_TILE_COUNT] = {
     {"V I R", TXT_TILE_OHM_NAME, TXT_TILE_OHM_NOTE},
     {NULL, TXT_TILE_COLOR_NAME, TXT_TILE_COLOR_NOTE},
     {"mm²", TXT_TILE_CABLE_NAME, TXT_TILE_CABLE_NOTE},
+    {"0°", TXT_TILE_LEVEL_NAME, TXT_TILE_LEVEL_NOTE},
 };
 
 static const Color COLOR_RESISTOR = {210, 170, 120, 255};
@@ -52,7 +52,7 @@ static const Color COLOR_BAND_TOLERANCE = {210, 170, 40, 255};
 
 enum {
     RESISTOR_WIDTH = 104,
-    RESISTOR_HEIGHT = 34,
+    RESISTOR_HEIGHT = 26,
     RESISTOR_LEAD = 22,
     RESISTOR_BAND_WIDTH = 8,
     RESISTOR_BAND_X = 18,
@@ -76,10 +76,11 @@ static ui_rect_t tile_rect(int index)
 {
     const int column = index % MENU_COLUMNS;
     const int row = index / MENU_COLUMNS;
+    const bool wide = index == MENU_TILE_COUNT - 1 && MENU_TILE_COUNT % MENU_COLUMNS == 1;
     return (ui_rect_t){
-        (int16_t)(MENU_MARGIN + column * (TILE_WIDTH + MENU_GAP)),
+        (int16_t)(MENU_MARGIN + (wide ? 0 : column * (TILE_WIDTH + MENU_GAP))),
         (int16_t)(MENU_HEADER_HEIGHT + row * (TILE_HEIGHT + MENU_GAP)),
-        TILE_WIDTH, TILE_HEIGHT,
+        (int16_t)(wide ? DISPLAY_WIDTH - 2 * MENU_MARGIN : TILE_WIDTH), TILE_HEIGHT,
     };
 }
 

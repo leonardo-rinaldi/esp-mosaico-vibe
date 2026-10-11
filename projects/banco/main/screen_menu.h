@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-/* Home screen: four large tiles, one per function. Tapping a tile opens that
+/* Home screen: five large tiles (two columns; an odd last tile spans both), one per function. Tapping a tile opens that
  * function; the tile order is the order of the function screens in game.h. */
 #pragma once
 #include "i18n.h"
 #include "ui_widgets.h"
 
-enum { MENU_TILE_COUNT = 4 };
+enum { MENU_TILE_COUNT = 5 };
 
 /* View lines: 0..3 the title of each tile, in tile order. */
 typedef struct {

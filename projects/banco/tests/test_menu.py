@@ -20,7 +20,8 @@ sys.path.insert(0, str(ENGINE_HOST))
 import run_game  # noqa: E402
 
 CONTROL_RESET = 3
-TILES = [((120, 180), "conv"), ((360, 180), "ohm"), ((120, 380), "colori"), ((360, 380), "cavo")]
+TILES = [((120, 140), "conv"), ((360, 140), "ohm"), ((120, 270), "colori"), ((360, 270), "cavo"),
+         ((240, 400), "livella")]
 BACK = (60, 20)
 TITLE = (300, 20)
 BTN_IT = (394, 28)
@@ -59,7 +60,7 @@ class MenuNavigation(unittest.TestCase):
         self.assertEqual(self.tap(TITLE), "conv")
 
     def test_gap_between_tiles_does_nothing(self) -> None:
-        self.assertEqual(self.tap((240, 280)), "menu")
+        self.assertEqual(self.tap((240, 270)), "menu")
 
     def test_reset_returns_to_menu(self) -> None:
         self.tap(TILES[1][0])
@@ -77,7 +78,7 @@ class Language(MenuNavigation):
 
     def test_english_button_translates_menu_and_italian_restores_it(self) -> None:
         self.assertEqual(self.tap(BTN_EN), "menu")
-        self.assertEqual(self.lines(), ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE"])
+        self.assertEqual(self.lines(), ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL"])
         self.tap(BTN_IT)
         self.assertEqual(self.lines()[0], "CONVERTITORE")
 

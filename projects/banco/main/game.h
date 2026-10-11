@@ -2,6 +2,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include "settings.h"
 
 typedef struct game_t *game_handle_t;
 typedef struct {
@@ -9,13 +10,14 @@ typedef struct {
     uint16_t height;
 } game_config_t;
 
-/* GAME_SCREEN_MENU is the home screen; its tiles open the four functions, in this order. */
+/* GAME_SCREEN_MENU is the home screen; its tiles open the five functions, in this order. */
 typedef enum {
     GAME_SCREEN_MENU,
     GAME_SCREEN_CONVERTER,
     GAME_SCREEN_OHM,
     GAME_SCREEN_COLORS,
     GAME_SCREEN_CABLE,
+    GAME_SCREEN_LEVEL,
     GAME_SCREEN_COUNT,
 } game_screen_t;
 
@@ -36,6 +38,13 @@ bool game_create(const game_config_t *config, game_handle_t *ret_handle);
 void game_delete(game_handle_t handle);
 void game_reset(game_handle_t handle);
 void game_set_paused(game_handle_t handle, bool paused);
+
+/* Remembered values (see settings.h). poll returns true once after every change
+ * with the new values; apply restores them, ignoring anything invalid, and does
+ * not count as a change. */
+void game_settings_apply(game_handle_t handle, const settings_t *settings);
+bool game_settings_poll(game_handle_t handle, settings_t *settings);
+void game_settings_get(game_handle_t handle, settings_t *settings);
 void game_set_pointer(game_handle_t handle, int32_t x, int32_t y, bool pressed);
 void game_update(game_handle_t handle);
 bool game_render(game_handle_t handle);

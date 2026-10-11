@@ -17,5 +17,7 @@ typedef struct {
 } conv_state_t;
 
 void conv_init(conv_state_t *state);
+/* Recompute the lines after the state was restored from saved settings. */
+void conv_relocalize(conv_state_t *state);
 void conv_tap(conv_state_t *state, int32_t x, int32_t y);
 void conv_draw(const conv_state_t *state, const ui_pointer_t *pointer, uint32_t tick);
