@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
-/* Bench assistant: four touch screens (converter, Ohm's law, resistor colour code,
- * cable voltage drop) behind a tab bar. The instance owns every screen's state and
- * is driven from a single loop, so no locking is needed. Host and device share it. */
+/* Bench assistant: a home menu that opens four touch screens (converter, Ohm's law,
+ * resistor colour code, cable voltage drop). Each function has a back bar to return
+ * to the menu. The instance owns every screen's state and is driven from a single
+ * loop, so no locking is needed. Host and device share it. */
 #include <stdlib.h>
 #include "game.h"
 #include "game_config.h"
@@ -9,14 +10,22 @@
 #include "screen_cable.h"
 #include "screen_color.h"
 #include "screen_conv.h"
+#include "screen_menu.h"
 #include "screen_ohm.h"
 #include "ui_font.h"
 #include "ui_widgets.h"
 
-enum { TAB_LABEL_SCALE = 2 };
+enum {
+    HEADER_TEXT_SCALE = 2,
+    BACK_BUTTON_WIDTH = 150,        /* The rest of the header only shows the title. */
+};
 
-static const char *const s_tab_label[GAME_SCREEN_COUNT] = {"CONV", "OHM", "COLORI", "CAVO"};
-static const char *const s_screen_name[GAME_SCREEN_COUNT] = {"conv", "ohm", "colori", "cavo"};
+static const char *const s_screen_name[GAME_SCREEN_COUNT] = {
+    "menu", "conv", "ohm", "colori", "cavo",
+};
+static const char *const s_screen_title[GAME_SCREEN_COUNT] = {
+    "BANCO", "CONVERTITORE", "LEGGE DI OHM", "CODICE COLORI", "CADUTA SU CAVO",
+};
 
 struct game_t {
     game_config_t config;
@@ -24,6 +33,7 @@ struct game_t {
     ui_pointer_t pointer;
     bool paused;
     game_screen_t screen;
+    menu_state_t menu;
     conv_state_t conv;
     ohm_state_t ohm;
     color_state_t color;
@@ -32,6 +42,7 @@ struct game_t {
 
 static void init_screens(game_handle_t game)
 {
+    menu_init(&game->menu);
     conv_init(&game->conv);
     ohm_init(&game->ohm);
     color_init(&game->color);
@@ -59,7 +70,7 @@ void game_delete(game_handle_t game)
 void game_reset(game_handle_t game)
 {
     if (!game) return;
-    game->screen = GAME_SCREEN_CONVERTER;
+    game->screen = GAME_SCREEN_MENU;
     game->paused = false;
     init_screens(game);
 }
@@ -72,19 +83,25 @@ void game_set_paused(game_handle_t game, bool paused)
 static const ui_lines_t *active_view(const struct game_t *game)
 {
     switch (game->screen) {
+    case GAME_SCREEN_MENU: return &game->menu.view;
     case GAME_SCREEN_CONVERTER: return &game->conv.view;
     case GAME_SCREEN_OHM: return &game->ohm.view;
     case GAME_SCREEN_COLORS: return &game->color.view;
     case GAME_SCREEN_CABLE: return &game->cable.view;
-    default: return &game->conv.view;
+    default: return &game->menu.view;
     }
 }
 
 static void tap(game_handle_t game, int32_t x, int32_t y)
 {
+    if (game->screen == GAME_SCREEN_MENU) {
+        const int tile = menu_hit(x, y);
+        /* The tiles are in the same order as the function screens after the menu. */
+        if (tile >= 0) game->screen = (game_screen_t)(GAME_SCREEN_CONVERTER + tile);
+        return;
+    }
     if (y < UI_TAB_HEIGHT) {
-        const int tab = (int)(x / (game->config.width / GAME_SCREEN_COUNT));
-        if (tab >= 0 && tab < GAME_SCREEN_COUNT) game->screen = (game_screen_t)tab;
+        if (x < BACK_BUTTON_WIDTH) game->screen = GAME_SCREEN_MENU;
         return;
     }
     switch (game->screen) {
@@ -112,14 +129,17 @@ void game_update(game_handle_t game)
     ++game->tick;
 }
 
-static void draw_tabs(const struct game_t *game)
+/* Back bar shown above every function: a back button and the function's title. */
+static void draw_header(const struct game_t *game)
 {
-    const int width = game->config.width / GAME_SCREEN_COUNT;
-    for (int i = 0; i < GAME_SCREEN_COUNT; ++i) {
-        const ui_rect_t rect = {(int16_t)(i * width), 0, (int16_t)width, UI_TAB_HEIGHT};
-        ui_button(rect, s_tab_label[i], TAB_LABEL_SCALE,
-                  (int)game->screen == i ? UI_BUTTON_SELECTED : UI_BUTTON_DISABLED, &game->pointer);
-    }
+    const ui_rect_t bar = {0, 0, (int16_t)game->config.width, UI_TAB_HEIGHT};
+    ui_fill(bar, UI_COLOR_PANEL);
+    const ui_rect_t back = {0, 0, BACK_BUTTON_WIDTH, UI_TAB_HEIGHT};
+    ui_button(back, "< MENU", HEADER_TEXT_SCALE, UI_BUTTON_FUNCTION, &game->pointer);
+    const int title_center = BACK_BUTTON_WIDTH + (game->config.width - BACK_BUTTON_WIDTH) / 2;
+    ui_text_draw_center(s_screen_title[game->screen], title_center,
+                        (UI_TAB_HEIGHT - ui_text_height(HEADER_TEXT_SCALE)) / 2,
+                        HEADER_TEXT_SCALE, UI_COLOR_ACCENT);
 }
 
 bool game_render(game_handle_t game)
@@ -131,8 +151,9 @@ bool game_render(game_handle_t game)
         return false;
     }
     ClearBackground(UI_COLOR_BG);
-    draw_tabs(game);
+    if (game->screen != GAME_SCREEN_MENU) draw_header(game);
     switch (game->screen) {
+    case GAME_SCREEN_MENU: menu_draw(&game->menu, &game->pointer); break;
     case GAME_SCREEN_CONVERTER: conv_draw(&game->conv, &game->pointer, game->tick); break;
     case GAME_SCREEN_OHM: ohm_draw(&game->ohm, &game->pointer); break;
     case GAME_SCREEN_COLORS: color_draw(&game->color, &game->pointer); break;

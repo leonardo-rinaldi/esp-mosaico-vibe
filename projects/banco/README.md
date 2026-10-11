@@ -1,9 +1,19 @@
 # banco
 
-A minimal Raylib Lite game: the first frame is an empty black canvas. No example
-gameplay, atlas, sounds, asset generation pipeline or game resource partition is
-included. The device runtime embeds a generated GSP canvas placeholder in the
-application binary; keep that display plumbing when adding your own drawing.
+Workshop helper for ESP-Mosaico. The app opens on a home menu with four tiles; tap
+one to open that function, and tap "< MENU" in the top-left corner to go back.
+
+| Tile | Function |
+| --- | --- |
+| CONVERTITORE | Unit converter (ohm, volt, ampere, farad, watt and prefixes) |
+| LEGGE DI OHM | Enter any two of V, I, R, P and get the others |
+| CODICE COLORI | Resistor colour code, 4 and 5 bands |
+| CAVO | Cable cross-section and voltage drop |
+
+Sources: `main/screen_menu.c` (home), `screen_conv/ohm/color/cable.c` (functions),
+`calc.c` (pure maths), `game.c` (screen switching and header).
+Tests: `python -m unittest discover -s projects/banco/tests -v`
+(`test_calc.py` for the maths, `test_menu.py` for menu navigation).
 
 From the workspace root:
 

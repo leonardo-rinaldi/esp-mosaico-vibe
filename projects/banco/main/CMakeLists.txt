@@ -1,6 +1,6 @@
 idf_component_register(
     SRCS "main.c" "game.c" "calc.c" "keypad.c" "screen_cable.c" "screen_color.c"
-         "screen_conv.c" "screen_ohm.c" "ui_font.c" "ui_widgets.c"
+         "screen_conv.c" "screen_menu.c" "screen_ohm.c" "ui_font.c" "ui_widgets.c"
     INCLUDE_DIRS "."
     REQUIRES mosaico_game_app mosaico_raylib_fast esp-gsp)
 

@@ -9,7 +9,9 @@ typedef struct {
     uint16_t height;
 } game_config_t;
 
+/* GAME_SCREEN_MENU is the home screen; its tiles open the four functions, in this order. */
 typedef enum {
+    GAME_SCREEN_MENU,
     GAME_SCREEN_CONVERTER,
     GAME_SCREEN_OHM,
     GAME_SCREEN_COLORS,

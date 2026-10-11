@@ -8,6 +8,7 @@
     "main/screen_cable.c",
     "main/screen_color.c",
     "main/screen_conv.c",
+    "main/screen_menu.c",
     "main/screen_ohm.c",
     "main/ui_font.c",
     "main/ui_widgets.c"

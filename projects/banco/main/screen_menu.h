@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+/* Home screen: four large tiles, one per function. Tapping a tile opens that
+ * function; the tile order is the order of the function screens in game.h. */
+#pragma once
+#include "ui_widgets.h"
+
+enum { MENU_TILE_COUNT = 4 };
+
+/* View lines: 0..3 the title of each tile, in tile order. */
+typedef struct {
+    ui_lines_t view;
+} menu_state_t;
+
+void menu_init(menu_state_t *state);
+/* Index of the tile under (x, y), or -1 when the touch is between or outside tiles. */
+int menu_hit(int32_t x, int32_t y);
+void menu_draw(const menu_state_t *state, const ui_pointer_t *pointer);
