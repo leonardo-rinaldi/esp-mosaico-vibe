@@ -13,17 +13,27 @@ every screen are saved in the device's NVS and come back after a restart.
 | CODICE COLORI | Resistor colour code, 4 and 5 bands |
 | CAVO | Cable cross-section and voltage drop |
 | LIVELLA | Spirit level and inclinometer from the accelerometer: FLAT (bubble vial, X and Y angles) or ON EDGE (angle from vertical, for pipes and walls), slope in percent, ZERO button |
-| LENTE | Live view from the camera module (left slot) with digital zoom x1-x4 and a freeze button; tap the picture to freeze too. The camera only runs on this screen |
+| RESISTENZA LED | Series resistor for an LED from supply voltage, LED voltage and current: next E24 value up, real current, power and the rating to use |
+| PARTITORE | Voltage divider: find VOUT from R1 and R2, or find R2 for a wanted VOUT (with the nearest E24 value); Ω, kΩ or MΩ |
+| CODICI SMD | SMD codes: resistors with 3 or 4 digits or R notation (4R7), E96 (two digits and a letter, 68X) and capacitors (104 = 100 nF) |
+| AWG - MM² | AWG to mm² (area, diameter, next metric size; 00, 000, 0000 with the ± key) and mm² to the nearest AWG |
 
 The battery level (from the BQ27220 fuel gauge) is shown top-left in the menu header; tap it for
 the battery screen: percentage, charging or not, voltage, current, temperature and time left or
 to full. The gauge is read by a small task every 2 s, started 3 s after boot.
 
+Battery life: the RISPARMIO button on the battery screen sets the screen brightness (high 100 %,
+medium 60 %, low 30 %) and the time without a touch after which the screen dims to 10 % (at half the
+time) and then turns off (never, 30 s, 1 min, 2 min; default 1 min). A touch wakes it, and that
+touch does not press anything. The choices are remembered. The panel brightness is set with
+`bsp_display_brightness_set` in `main/main.c`; nothing is drawn while the screen is off.
+
 Sources: `main/screen_menu.c` (home), `screen_conv/ohm/color/cable.c` (functions),
-`calc.c`, `level.c` and `power_status.c` (pure logic), `screen_lens.c` (lens screen; `lens_present_host.c` is the Host test pattern, `lens_present_device.c` and `lens_camera.c` are the board camera path), `settings.h` (what is remembered), `i18n.c` (all Italian and English texts), `game.c` (screen switching and header).
+`screen_led/divider/smd/awg.c` and `form.c` (bench tools), `screen_power.c` (power saving),
+`calc.c`, `calc_bench.c`, `level.c` and `power_status.c` (pure logic), `settings.h` (what is remembered), `i18n.c` (all Italian and English texts), `game.c` (screen switching and header).
 Tests: `python -m unittest discover -s projects/banco/tests -v`
 (`test_calc.py` and `test_level.py` for the maths, `test_menu.py` for navigation and language,
-`test_level.py` for the level screen, `test_settings.py` for saving and restoring, `test_battery.py` for the battery).
+`test_level.py` for the level screen, `test_settings.py` for saving and restoring, `test_battery.py` for the battery, `test_tools.py` for LED, divider, SMD and AWG, `test_power.py` for power saving).
 
 The axis directions of the accelerometer on the real board are set by `LEVEL_SIGN_X` and
 `LEVEL_SIGN_Y` in `main/level.c`; flip them if a tilt shows the wrong way on the device.

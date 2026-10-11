@@ -22,12 +22,12 @@ sys.path.insert(0, str(ENGINE_HOST))
 
 import run_game  # noqa: E402
 
-SETTINGS_SIZE = 120
+SETTINGS_SIZE = 122
 CONTROL_RESET = 3
 BACK = (60, 20)
 BTN_EN = (446, 28)
-TILES = {"conv": (120, 140), "ohm": (360, 140), "colori": (120, 270), "cavo": (360, 270),
-         "livella": (120, 400), "lente": (360, 400)}
+TILES = {"conv": (120, 117), "ohm": (360, 117), "colori": (120, 196), "cavo": (360, 196),
+         "livella": (120, 275)}
 # Keypad keys by position on the screens that use it (see keypad.c layout).
 KEYS = {"7": (60, 332), "8": (180, 332), "9": (300, 332)}
 

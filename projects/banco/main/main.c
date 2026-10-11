@@ -3,13 +3,13 @@
 #include <math.h>
 #include "bundle_gsp.h"
 #include "bsp/battery.h"
+#include "bsp/display.h"
 #include "esp_check.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "game.h"
 #include "game_config.h"
-#include "lens_camera.h"
 #include "mosaico_game_app.h"
 #include "mosaico_game_save.h"
 
@@ -91,7 +91,6 @@ static uint64_t now_ms(void)
  * damaged record just leaves the defaults: the app must always start. */
 static esp_err_t on_start(void)
 {
-    if (!lens_camera_start()) ESP_LOGW(GAME_NAME, "lens camera task not started");
     if (xTaskCreate(battery_task, "battery", BATTERY_TASK_STACK, NULL, BATTERY_TASK_PRIORITY, NULL) != pdPASS)
         ESP_LOGW(GAME_NAME, "battery task not started");
     const mosaico_save_config_t config = {
@@ -111,9 +110,22 @@ static void on_event(const mosaico_device_event_t *event)
         game_set_pointer(s_game, event->x, event->y, event->pressed);
 }
 
+/* The panel brightness follows the game: the chosen level, dimmed and then off after a while
+ * without a touch. Only a change is sent to the panel. */
+static void apply_brightness(void)
+{
+    static int s_applied = -1;
+    const int wanted = game_display_brightness(s_game);
+    if (wanted == s_applied) return;
+    s_applied = wanted;
+    const esp_err_t result = bsp_display_brightness_set(wanted);
+    if (result != ESP_OK) ESP_LOGW(GAME_NAME, "brightness %d%% not applied: %s", wanted, esp_err_to_name(result));
+}
+
 static void on_update(void)
 {
     game_update(s_game);
+    apply_brightness();
     battery_sample_t battery;
     bool fresh;
     portENTER_CRITICAL(&s_battery_lock);
@@ -122,11 +134,6 @@ static void on_update(void)
     s_battery_fresh = false;
     portEXIT_CRITICAL(&s_battery_lock);
     if (fresh) game_set_battery(s_game, &battery);
-    /* The lens screen drives the camera task and shows what it reports. */
-    lens_request_t lens;
-    game_lens_request(s_game, &lens);
-    lens_camera_request(&lens);
-    if (lens.active) game_set_lens_status(s_game, lens_camera_status());
     settings_t settings;
     if (game_settings_poll(s_game, &settings)) (void)mosaico_save_request(&s_save, &settings, now_ms());
     (void)mosaico_save_flush(&s_save, now_ms(), false);
@@ -143,7 +150,7 @@ static const mosaico_game_app_config_t s_config = {
     .canvas_bind = GSP_GAME_BIND_GAME_CANVAS,
     .touch_points = 1,
     .enable_imu = true,         /* Without this the engine never starts the accelerometer. */
-    .imu_sample_ms = 20,
+    .imu_sample_ms = 40,        /* 25 readings a second are plenty for the level. */
     .target_fps = GAME_TICK_HZ,
     .gsp_bundle = gsp_bundle_config,
     .on_start = on_start,

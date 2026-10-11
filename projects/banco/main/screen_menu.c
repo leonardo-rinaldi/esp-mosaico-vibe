@@ -13,12 +13,10 @@ enum {
     MENU_TITLE_Y = 12,
     MENU_SUBTITLE_SCALE = 2,
     MENU_SUBTITLE_Y = 56,
-    TILE_ICON_SCALE = 4,
-    TILE_ICON_Y = 12,               /* From the tile top. */
     TILE_NAME_SCALE = 2,
-    TILE_NAME_Y = 56,
+    TILE_NAME_Y = 13,               /* From the tile top. */
     TILE_NOTE_SCALE = 2,
-    TILE_NOTE_Y = 84,
+    TILE_NOTE_Y = 38,
     TILE_BORDER = 2,
     DISPLAY_WIDTH = 480,
     DISPLAY_HEIGHT = 480,
@@ -31,36 +29,23 @@ enum {
 _Static_assert((int)MENU_LINE_COUNT <= (int)UI_LINES_MAX, "every tile title and the battery need a view line");
 
 typedef struct {
-    const char *icon;               /* Large text; NULL when the tile draws its own icon. */
     text_id_t name;
     text_id_t note;
 } tile_t;
 
 static const tile_t s_tile[MENU_TILE_COUNT] = {
-    {"kΩ", TXT_TILE_CONV_NAME, TXT_TILE_CONV_NOTE},
-    {"V I R", TXT_TILE_OHM_NAME, TXT_TILE_OHM_NOTE},
-    {NULL, TXT_TILE_COLOR_NAME, TXT_TILE_COLOR_NOTE},
-    {"mm²", TXT_TILE_CABLE_NAME, TXT_TILE_CABLE_NOTE},
-    {"0°", TXT_TILE_LEVEL_NAME, TXT_TILE_LEVEL_NOTE},
-    {"X2", TXT_TILE_LENS_NAME, TXT_TILE_LENS_NOTE},
+    {TXT_TILE_CONV_NAME, TXT_TILE_CONV_NOTE},
+    {TXT_TILE_OHM_NAME, TXT_TILE_OHM_NOTE},
+    {TXT_TILE_COLOR_NAME, TXT_TILE_COLOR_NOTE},
+    {TXT_TILE_CABLE_NAME, TXT_TILE_CABLE_NOTE},
+    {TXT_TILE_LEVEL_NAME, TXT_TILE_LEVEL_NOTE},
+    {TXT_TILE_LED_NAME, TXT_TILE_LED_NOTE},
+    {TXT_TILE_DIV_NAME, TXT_TILE_DIV_NOTE},
+    {TXT_TILE_SMD_NAME, TXT_TILE_SMD_NOTE},
+    {TXT_TILE_AWG_NAME, TXT_TILE_AWG_NOTE},
 };
 
-static const Color COLOR_RESISTOR = {210, 170, 120, 255};
-static const Color COLOR_LEAD = {150, 155, 165, 255};
-static const Color COLOR_BAND_FIRST = {250, 220, 40, 255};
-static const Color COLOR_BAND_SECOND = {150, 70, 200, 255};
-static const Color COLOR_BAND_THIRD = {225, 40, 50, 255};
-static const Color COLOR_BAND_TOLERANCE = {210, 170, 40, 255};
-
 enum {
-    RESISTOR_WIDTH = 104,
-    RESISTOR_HEIGHT = 26,
-    RESISTOR_LEAD = 22,
-    RESISTOR_BAND_WIDTH = 8,
-    RESISTOR_BAND_X = 18,
-    RESISTOR_BAND_PITCH = 20,
-    RESISTOR_TOLERANCE_X = 84,
-    RESISTOR_LEAD_THICKNESS = 4,
     BATTERY_HIT_X = 6, BATTERY_HIT_Y = 4, BATTERY_HIT_W = 128, BATTERY_HIT_H = 44,
     BATTERY_ICON_X = 14, BATTERY_ICON_Y = 15, BATTERY_ICON_W = 44, BATTERY_ICON_H = 22,
     BATTERY_TEXT_X = 66, BATTERY_TEXT_Y = 17, BATTERY_TEXT_SCALE = 2,
@@ -132,25 +117,6 @@ int menu_hit(int32_t x, int32_t y)
     return -1;
 }
 
-static void draw_resistor_icon(ui_rect_t tile, int top)
-{
-    const int total = RESISTOR_WIDTH + 2 * RESISTOR_LEAD;
-    const int left = tile.x + (tile.w - total) / 2;
-    const int body_x = left + RESISTOR_LEAD;
-    const int body_y = top + (UI_FONT_HEIGHT * TILE_ICON_SCALE - RESISTOR_HEIGHT) / 2;
-    const int mid_y = body_y + RESISTOR_HEIGHT / 2;
-    DrawRectangle(left, mid_y - RESISTOR_LEAD_THICKNESS / 2, total, RESISTOR_LEAD_THICKNESS,
-                  COLOR_LEAD);
-    DrawRectangle(body_x, body_y, RESISTOR_WIDTH, RESISTOR_HEIGHT, COLOR_RESISTOR);
-    const Color bands[] = {COLOR_BAND_FIRST, COLOR_BAND_SECOND, COLOR_BAND_THIRD};
-    for (int i = 0; i < 3; ++i) {
-        DrawRectangle(body_x + RESISTOR_BAND_X + i * RESISTOR_BAND_PITCH, body_y,
-                      RESISTOR_BAND_WIDTH, RESISTOR_HEIGHT, bands[i]);
-    }
-    DrawRectangle(body_x + RESISTOR_TOLERANCE_X, body_y, RESISTOR_BAND_WIDTH, RESISTOR_HEIGHT,
-                  COLOR_BAND_TOLERANCE);
-}
-
 static void draw_tile(int index, const ui_pointer_t *pointer)
 {
     const ui_rect_t rect = tile_rect(index);
@@ -160,14 +126,8 @@ static void draw_tile(int index, const ui_pointer_t *pointer)
 
     const int center = rect.x + rect.w / 2;
     const tile_t *tile = &s_tile[index];
-    if (tile->icon) {
-        ui_text_draw_center(tile->icon, center, rect.y + TILE_ICON_Y, TILE_ICON_SCALE,
-                            pressed ? UI_COLOR_ON_ACCENT : UI_COLOR_ACCENT);
-    } else {
-        draw_resistor_icon(rect, rect.y + TILE_ICON_Y);
-    }
     ui_text_draw_center(i18n_text(tile->name), center, rect.y + TILE_NAME_Y, TILE_NAME_SCALE,
-                        pressed ? UI_COLOR_ON_ACCENT : UI_COLOR_TEXT);
+                        pressed ? UI_COLOR_ON_ACCENT : UI_COLOR_ACCENT);
     ui_text_draw_center(i18n_text(tile->note), center, rect.y + TILE_NOTE_Y, TILE_NOTE_SCALE,
                         pressed ? UI_COLOR_ON_ACCENT : UI_COLOR_MUTED);
 }

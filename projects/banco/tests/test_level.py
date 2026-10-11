@@ -122,7 +122,7 @@ else:
     import run_game  # noqa: E402
 
 CONTROL_RESET = 3
-LEVEL_TILE = (120, 400)
+LEVEL_TILE = (120, 275)
 BACK = (60, 20)
 MODE_FLAT, MODE_EDGE = (120, 70), (360, 70)
 ZERO, RESET_ZERO = (120, 438), (360, 438)

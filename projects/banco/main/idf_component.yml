@@ -7,9 +7,6 @@ dependencies:
   esp-mosaico-bsp:
     version: "*"
     override_path: "../../../submodule/esp-mosaico-bsp/components/esp-mosaico-bsp"
-  mosaico_module_camera:
-    version: "*"
-    override_path: "../../../submodule/esp-mosaico-bsp/components/mosaico_module_camera"
   esp_iris:
     version: "*"
     override_path: "../../../submodule/esp-mosaico-utils/ESP-Iris/components/esp_iris"

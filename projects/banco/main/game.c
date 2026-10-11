@@ -13,8 +13,12 @@
 #include "screen_cable.h"
 #include "screen_color.h"
 #include "screen_conv.h"
-#include "screen_lens.h"
+#include "screen_awg.h"
+#include "screen_divider.h"
+#include "screen_led.h"
 #include "screen_level.h"
+#include "screen_power.h"
+#include "screen_smd.h"
 #include "screen_menu.h"
 #include "screen_ohm.h"
 #include "ui_font.h"
@@ -23,16 +27,21 @@
 enum {
     HEADER_TEXT_SCALE = 2,
     BACK_BUTTON_WIDTH = 150,        /* The rest of the header only shows the title. */
+    POWER_BUTTON_X = 330,           /* Battery screen: the button to the power-saving screen. */
+    DIM_PERCENT = 10,               /* Brightness of a dimmed screen. */
 };
 
 static const char *const s_screen_name[GAME_SCREEN_COUNT] = {
-    "menu", "conv", "ohm", "colori", "cavo", "livella", "lente", "batteria",
+    "menu", "conv", "ohm", "colori", "cavo", "livella", "led", "partitore", "smd", "awg", "batteria",
+    "risparmio",
 };
 /* Header title of each function screen; the menu has no header. */
 static const text_id_t s_screen_title[GAME_SCREEN_COUNT] = {
     [GAME_SCREEN_CONVERTER] = TXT_TITLE_CONV, [GAME_SCREEN_OHM] = TXT_TITLE_OHM,
     [GAME_SCREEN_COLORS] = TXT_TITLE_COLOR, [GAME_SCREEN_CABLE] = TXT_TITLE_CABLE,
-    [GAME_SCREEN_LEVEL] = TXT_TITLE_LEVEL, [GAME_SCREEN_LENS] = TXT_TITLE_LENS, [GAME_SCREEN_BATTERY] = TXT_TITLE_BATTERY,
+    [GAME_SCREEN_LEVEL] = TXT_TITLE_LEVEL, [GAME_SCREEN_LED] = TXT_TITLE_LED,
+    [GAME_SCREEN_DIVIDER] = TXT_TITLE_DIV, [GAME_SCREEN_SMD] = TXT_TITLE_SMD, [GAME_SCREEN_AWG] = TXT_TITLE_AWG,
+    [GAME_SCREEN_BATTERY] = TXT_TITLE_BATTERY, [GAME_SCREEN_POWER] = TXT_TITLE_POWER,
 };
 
 struct game_t {
@@ -47,8 +56,13 @@ struct game_t {
     color_state_t color;
     cable_state_t cable;
     level_state_t level;
-    lens_state_t lens;
+    led_state_t led;
+    divider_state_t divider;
+    smd_state_t smd;
+    awg_state_t awg;
     battery_screen_t battery;
+    power_state_t power;
+    uint32_t idle_ticks;            /* Ticks since the last touch; drives dimming and screen off. */
     settings_t seen;                /* Last values reported by game_settings_poll. */
 };
 
@@ -60,24 +74,39 @@ static void relocalize_screens(game_handle_t game)
     color_relocalize(&game->color);
     cable_relocalize(&game->cable);
     level_relocalize(&game->level);
-    lens_relocalize(&game->lens);
+    led_relocalize(&game->led);
+    divider_relocalize(&game->divider);
+    smd_relocalize(&game->smd);
+    awg_relocalize(&game->awg);
+    power_relocalize(&game->power);
     battery_screen_relocalize(&game->battery);
 }
 
 static void init_screens(game_handle_t game)
 {
     const battery_sample_t last_battery = game->battery.sample;
+    const power_state_t last_power = game->power;
     menu_init(&game->menu);
     conv_init(&game->conv);
     ohm_init(&game->ohm);
     color_init(&game->color);
     cable_init(&game->cable);
     level_init(&game->level);
-    lens_init(&game->lens);
+    led_init(&game->led);
+    divider_init(&game->divider);
+    smd_init(&game->smd);
+    awg_init(&game->awg);
     battery_screen_init(&game->battery);
+    power_init(&game->power);
+    game->idle_ticks = 0;
     /* The gauge keeps reporting on its own, so a reset must not forget the last reading. */
     if (last_battery.valid) battery_screen_set(&game->battery, &last_battery);
     menu_set_battery(&game->menu, &game->battery.sample);
+    /* The power choices are settings, not entries: a reset keeps them. */
+    if (last_power.view.count) {
+        game->power = last_power;
+        power_relocalize(&game->power);
+    }
 }
 
 bool game_create(const game_config_t *config, game_handle_t *ret_handle)
@@ -138,6 +167,8 @@ void game_settings_get(game_handle_t game, settings_t *out)
     for (int i = 0; i < RESISTOR_MAX_BANDS; ++i) out->color_color[i] = (uint8_t)game->color.color[i];
     out->level_mode = (uint8_t)game->level.mode;
     memcpy(out->level_zero, game->level.zero, sizeof(out->level_zero));
+    out->power_brightness = game->power.brightness;
+    out->power_sleep = game->power.sleep;
 }
 
 /* Rebuild an entry key by key, so only text that is a valid number gets in. Text
@@ -210,6 +241,10 @@ void game_settings_apply(game_handle_t game, const settings_t *in)
     }
     game->level.valid = false;
 
+    if (value.power_brightness < POWER_BRIGHTNESS_COUNT) game->power.brightness = value.power_brightness;
+    if (value.power_sleep < POWER_SLEEP_COUNT) game->power.sleep = value.power_sleep;
+    power_relocalize(&game->power);
+
     conv_relocalize(&game->conv);
     relocalize_screens(game);
     game_settings_get(game, &game->seen);      /* Restoring is not a change to save. */
@@ -247,7 +282,11 @@ static const ui_lines_t *active_view(const struct game_t *game)
     case GAME_SCREEN_COLORS: return &game->color.view;
     case GAME_SCREEN_CABLE: return &game->cable.view;
     case GAME_SCREEN_LEVEL: return &game->level.view;
-    case GAME_SCREEN_LENS: return &game->lens.view;
+    case GAME_SCREEN_LED: return &game->led.view;
+    case GAME_SCREEN_DIVIDER: return &game->divider.view;
+    case GAME_SCREEN_SMD: return &game->smd.view;
+    case GAME_SCREEN_AWG: return &game->awg.view;
+    case GAME_SCREEN_POWER: return &game->power.view;
     case GAME_SCREEN_BATTERY: return &game->battery.view;
     default: return &game->menu.view;
     }
@@ -268,14 +307,14 @@ static void tap(game_handle_t game, int32_t x, int32_t y)
         }
         const int tile = menu_hit(x, y);
         /* The tiles are in the same order as the function screens after the menu. */
-        if (tile >= 0) {
-            game->screen = (game_screen_t)(GAME_SCREEN_CONVERTER + tile);
-            if (game->screen == GAME_SCREEN_LENS) lens_enter(&game->lens);
-        }
+        if (tile >= 0) game->screen = (game_screen_t)(GAME_SCREEN_CONVERTER + tile);
         return;
     }
     if (y < UI_TAB_HEIGHT) {
-        if (x < BACK_BUTTON_WIDTH) game->screen = GAME_SCREEN_MENU;
+        if (x < BACK_BUTTON_WIDTH)
+            game->screen = game->screen == GAME_SCREEN_POWER ? GAME_SCREEN_BATTERY : GAME_SCREEN_MENU;
+        else if (game->screen == GAME_SCREEN_BATTERY && x >= POWER_BUTTON_X)
+            game->screen = GAME_SCREEN_POWER;
         return;
     }
     switch (game->screen) {
@@ -284,38 +323,44 @@ static void tap(game_handle_t game, int32_t x, int32_t y)
     case GAME_SCREEN_COLORS: color_tap(&game->color, x, y); break;
     case GAME_SCREEN_CABLE: cable_tap(&game->cable, x, y); break;
     case GAME_SCREEN_LEVEL: level_tap(&game->level, x, y); break;
-    case GAME_SCREEN_LENS: lens_tap(&game->lens, x, y); break;
+    case GAME_SCREEN_LED: led_tap(&game->led, x, y); break;
+    case GAME_SCREEN_DIVIDER: divider_tap(&game->divider, x, y); break;
+    case GAME_SCREEN_SMD: smd_tap(&game->smd, x, y); break;
+    case GAME_SCREEN_AWG: awg_tap(&game->awg, x, y); break;
+    case GAME_SCREEN_POWER: power_tap(&game->power, x, y); break;
     default: break;
     }
 }
 
-void game_lens_request(game_handle_t game, lens_request_t *out)
+int game_display_brightness(game_handle_t game)
 {
-    if (!game || !out) return;
-    out->active = game->screen == GAME_SCREEN_LENS;
-    out->zoom = game->lens.zoom;
-    out->frozen = game->lens.frozen;
-}
-
-void game_set_lens_status(game_handle_t game, lens_status_t status)
-{
-    if (game) lens_set_status(&game->lens, status);
+    if (!game) return 0;
+    const int normal = power_brightness_percent(&game->power);
+    const uint32_t limit = (uint32_t)power_sleep_seconds(&game->power) * GAME_TICK_HZ;
+    if (limit == 0) return normal;
+    if (game->idle_ticks >= limit) return 0;
+    if (game->idle_ticks >= limit / 2) return normal < DIM_PERCENT ? normal : DIM_PERCENT;
+    return normal;
 }
 
 void game_set_pointer(game_handle_t game, int32_t x, int32_t y, bool pressed)
 {
     if (!game) return;
+    /* The touch that wakes a dark screen only wakes it: nobody sees what it would press. */
+    const bool screen_was_off = game_display_brightness(game) == 0;
+    game->idle_ticks = 0;
     const bool was_down = game->pointer.down;
     game->pointer.x = x < 0 ? 0 : (x >= game->config.width ? game->config.width - 1 : x);
     game->pointer.y = y < 0 ? 0 : (y >= game->config.height ? game->config.height - 1 : y);
     game->pointer.down = pressed;
-    if (pressed && !was_down && !game->paused) tap(game, game->pointer.x, game->pointer.y);
+    if (pressed && !was_down && !game->paused && !screen_was_off) tap(game, game->pointer.x, game->pointer.y);
 }
 
 void game_update(game_handle_t game)
 {
     if (!game || game->paused) return;
     ++game->tick;
+    if (game->idle_ticks < UINT32_MAX) ++game->idle_ticks;
     /* The level only listens while it is on screen; the other screens ignore the sensor. */
     if (game->screen == GAME_SCREEN_LEVEL) {
         const Vector3 g = MosaicoFastGetImuAcceleration();
@@ -330,24 +375,22 @@ static void draw_header(const struct game_t *game)
     ui_fill(bar, UI_COLOR_PANEL);
     const ui_rect_t back = {0, 0, BACK_BUTTON_WIDTH, UI_TAB_HEIGHT};
     ui_button(back, "< MENU", HEADER_TEXT_SCALE, UI_BUTTON_FUNCTION, &game->pointer);
-    const int title_center = BACK_BUTTON_WIDTH + (game->config.width - BACK_BUTTON_WIDTH) / 2;
+    int title_right = game->config.width;
+    if (game->screen == GAME_SCREEN_BATTERY) {
+        const ui_rect_t saving = {POWER_BUTTON_X, 0, (int16_t)(game->config.width - POWER_BUTTON_X), UI_TAB_HEIGHT};
+        ui_button(saving, i18n_text(TXT_POWER_BUTTON), HEADER_TEXT_SCALE, UI_BUTTON_FUNCTION, &game->pointer);
+        title_right = POWER_BUTTON_X;
+    }
+    const int title_center = BACK_BUTTON_WIDTH + (title_right - BACK_BUTTON_WIDTH) / 2;
     ui_text_draw_center(i18n_text(s_screen_title[game->screen]), title_center,
                         (UI_TAB_HEIGHT - ui_text_height(HEADER_TEXT_SCALE)) / 2,
                         HEADER_TEXT_SCALE, UI_COLOR_ACCENT);
 }
 
-static void lens_overlay(void *context)
-{
-    const struct game_t *game = context;
-    draw_header(game);
-    lens_draw_overlay(&game->lens, &game->pointer);
-}
-
 bool game_render(game_handle_t game)
 {
     if (!game) return false;
-    /* The lens paints the camera picture straight into the display frame. */
-    if (game->screen == GAME_SCREEN_LENS) return lens_present(&game->lens, lens_overlay, game);
+    if (game_display_brightness(game) == 0) return true;     /* Screen off: nothing to draw. */
     BeginDrawing();
     if (!MosaicoFastFrameAvailable()) {
         EndDrawing();
@@ -362,6 +405,11 @@ bool game_render(game_handle_t game)
     case GAME_SCREEN_COLORS: color_draw(&game->color, &game->pointer); break;
     case GAME_SCREEN_CABLE: cable_draw(&game->cable, &game->pointer); break;
     case GAME_SCREEN_LEVEL: level_draw(&game->level, &game->pointer); break;
+    case GAME_SCREEN_LED: led_draw(&game->led, &game->pointer); break;
+    case GAME_SCREEN_DIVIDER: divider_draw(&game->divider, &game->pointer); break;
+    case GAME_SCREEN_SMD: smd_draw(&game->smd, &game->pointer); break;
+    case GAME_SCREEN_AWG: awg_draw(&game->awg, &game->pointer); break;
+    case GAME_SCREEN_POWER: power_draw(&game->power, &game->pointer); break;
     case GAME_SCREEN_BATTERY: battery_screen_draw(&game->battery); break;
     default: break;
     }

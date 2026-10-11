@@ -20,8 +20,9 @@ sys.path.insert(0, str(ENGINE_HOST))
 import run_game  # noqa: E402
 
 CONTROL_RESET = 3
-TILES = [((120, 140), "conv"), ((360, 140), "ohm"), ((120, 270), "colori"), ((360, 270), "cavo"),
-         ((120, 400), "livella"), ((360, 400), "lente")]
+TILES = [((120, 117), "conv"), ((360, 117), "ohm"), ((120, 196), "colori"), ((360, 196), "cavo"),
+         ((120, 275), "livella"), ((360, 275), "led"), ((120, 354), "partitore"), ((360, 354), "smd"),
+         ((240, 433), "awg")]
 BACK = (60, 20)
 TITLE = (300, 20)
 BTN_IT = (394, 28)
@@ -60,7 +61,7 @@ class MenuNavigation(unittest.TestCase):
         self.assertEqual(self.tap(TITLE), "conv")
 
     def test_gap_between_tiles_does_nothing(self) -> None:
-        self.assertEqual(self.tap((240, 270)), "menu")
+        self.assertEqual(self.tap((240, 275)), "menu")
 
     def test_reset_returns_to_menu(self) -> None:
         self.tap(TILES[1][0])
@@ -78,7 +79,7 @@ class Language(MenuNavigation):
 
     def test_english_button_translates_menu_and_italian_restores_it(self) -> None:
         self.assertEqual(self.tap(BTN_EN), "menu")
-        self.assertEqual(self.lines()[:6], ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL", "LENS"])
+        self.assertEqual(self.lines()[:9], ["CONVERTER", "OHMS LAW", "COLOR CODE", "CABLE", "LEVEL", "LED RESISTOR", "DIVIDER", "SMD CODES", "AWG - MM²"])
         self.tap(BTN_IT)
         self.assertEqual(self.lines()[0], "CONVERTITORE")
 
